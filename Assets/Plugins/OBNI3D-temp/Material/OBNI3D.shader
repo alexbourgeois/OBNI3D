@@ -4,10 +4,9 @@ Shader "Custom/OBNI3D"
 {
     Properties
     {
-		_Tess("Tessellation", Range(1,32)) = 4
-
 		_MainTex("Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
+
 		_ColorTexRepetition("ColorRepetition", Range(-10,100)) = 1
 		_ColorReadingSpeed("ColorReadingSpeed", Range(-100,100)) = 0
 		_ColorOffset("Color Offset", Float) = 0
@@ -18,7 +17,8 @@ Shader "Custom/OBNI3D"
 
 		_DeformationAxis("Deformation axis", Vector) = (0,1,0,0)
 		_NormalInfluence("Normal influence in deformation", Float) = 0
-		//_NoiseVolumeRT0("Noise volume render texture 0", 3D) = "black" {}
+
+		_Tess("Tessellation", Range(1,32)) = 4
     }
     SubShader
     {
@@ -30,10 +30,9 @@ Shader "Custom/OBNI3D"
 #pragma exclude_renderers gles
 
 		#include "../Plugins/Unity-Noises/Includes/SimplexNoise3D.hlsl"
-		//#include "Unity-Noises/Includes/PerlinNoise3D.hlsl"
 		#include "../Plugins/Unity-Noises/Includes/VoronoiNoise3D.hlsl"
 
-		#pragma surface surf Standard addshadow fullforwardshadows vertex:disp //tessellate:tessFixed 
+		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //tessellate:tessFixed 
 		#pragma target 5.0
 
 		 int noiseVolumeCount = 0;
@@ -54,19 +53,11 @@ Shader "Custom/OBNI3D"
 			float2 texcoord : TEXCOORD0;
 		};
 
-		float _NormalInfluence;
-		float3 _DeformationAxis;
-		float _Tess;
-
 		/*float4 tessFixed() //Can't use tesselation with out Input in vertex function
 		{
 			return _Tess;
 		}
 */
-
-	//	float sdBoxTransformed(float3 p, float4x4 transform) {
-			//float3x4 posAndRot = 
-	//	}
 
 		float sdBox(float3 p, float3 b)
 		{
@@ -74,52 +65,25 @@ Shader "Custom/OBNI3D"
 			return length(max(d, 0.0))
 				+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
 		}
-		//Rot + trans
+
 		float3 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
 		{
-			/*float4 pBig = float4(p, 1.0);*/
 			float4 tp = mul(t, p);
 			float3 p2 = float3(tp.x, tp.y, tp.z);
 			return sdBox(p2, float3(1,1,1));
 		}
 
-		//Scale
-		/*float opScale(in vec3 p, in float s, in sdf3d primitive)
-		{
-			return primitive(p / s)*s;
-		}*/
-
-		struct Input
-		{
-			/*float4 vertex : SV_POSITION;
-			float3 viewDir : TEXCOORD1;
-			float2 texcoord : TEXCOORD0;*/
-			float2 uv_MainTex;
-			float3 vertex;
-			float3 worldPos;
-			float3 normal;
-		};
-
-		void disp(inout appdata_full v, out Input o)
-		{
-			UNITY_INITIALIZE_OUTPUT(Input, o);
-			float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-			o.worldPos = worldPos;
-			o.vertex = v.vertex;
-			//if(sdBox(worldPos, float3(1,1,1))
-			
-			float disp = 0.0;
+		float sumNoisesOnPosition(float3 worldPos) {
+			float sum = 0.0;
 			float time = 0.0;
+
 			for (int i = 0; i < noiseVolumeCount; i++) {
 				time = noiseVolumeSettings[i][2][1] == 1.0f ? noiseVolumeSettings[i][2][2] : _Time.y;
 				float noise = 0.0;
 
-				if (noiseVolumeSettings[i][0][0] == 0) {
 				//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-				//	disp += PerlinNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
-				}
 				if (noiseVolumeSettings[i][0][0] == 1) {
-				//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
+					//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
 					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
 				}
 				if (noiseVolumeSettings[i][0][0] == 2) {
@@ -127,14 +91,37 @@ Shader "Custom/OBNI3D"
 					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
 
 				}
-				noise += noiseVolumeSettings[i][0][2];
+				noise += noiseVolumeSettings[i][0][2]; //offset
 
-				noise *= clamp(1 - opTx(float4(worldPos,1), noiseVolumeTransforms[i]), 0, 1);
+				noise *= clamp(1 - opTx(float4(worldPos, 1), noiseVolumeTransforms[i]), 0, 1);
 
-				disp += noise;
-
+				sum += noise;
 			}
+			return sum;
+		}
+
+		float _NormalInfluence;
+		float3 _DeformationAxis;
+		float _Tess;
+
+		struct Input
+		{
+			float2 uv_MainTex;
+			float3 worldPos;
+			float3 normal;
+		};
+
+
+		void vert(inout appdata_full v, out Input o)
+		{
+			UNITY_INITIALIZE_OUTPUT(Input, o);
+
+			float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+			o.worldPos = worldPos;
+
+			float disp = sumNoisesOnPosition(worldPos);
 			
+			//Recopute normals
 			float3 bitangent = cross(v.normal, v.tangent);
 			float3 position = v.vertex + v.normal  * disp;
 
@@ -151,7 +138,6 @@ Shader "Custom/OBNI3D"
 			o.normal = newNormal;
 		}
 
-
 		fixed4 _Color;
 		float _ColorTexRepetition, _ColorReadingSpeed, _ColorOffset;
 		half _Emission;
@@ -160,45 +146,19 @@ Shader "Custom/OBNI3D"
 		sampler2D _MainTex;
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
-			float disp = 0.0;
-			float time = 0.0;
-			for (int i = 0; i < noiseVolumeCount; i++) {
-				time = noiseVolumeSettings[i][2][1] == 1.0f ? noiseVolumeSettings[i][2][2] : _Time.y;
-				float noise = 0.0;
-				if (noiseVolumeSettings[i][0][0] == 0) {
-					//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-					//	disp += PerlinNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
-				}
-				if (noiseVolumeSettings[i][0][0] == 1) {
-					//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
-					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(IN.worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
-				}
-				if (noiseVolumeSettings[i][0][0] == 2) {
-					//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(IN.worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
 
-				}
-				noise += noiseVolumeSettings[i][0][2];
+			float disp = sumNoisesOnPosition(IN.worldPos);
 
-				noise *= clamp(1 - opTx(float4(IN.worldPos, 1), noiseVolumeTransforms[i]), 0, 1);
+			float y = disp * _ColorTexRepetition * length(IN.normal * _NormalInfluence + _DeformationAxis);
 
-				disp += noise;
-			}
-
-
-		//	float3 worldPos = mul(unity_ObjectToWorld, IN.uv_MainTex).xyz;
-			float y = disp * _ColorTexRepetition * (IN.normal * _NormalInfluence + _DeformationAxis);
-			//float diff = deformedPosition - IN.world;
 			float2 colorReader = (1.0f, _ColorOffset + y + _Time.x *_ColorReadingSpeed);
-			//half4 c = tex2D(_MainTex, colorReader) * _Color;
 			half4 c = tex2D(_MainTex, colorReader) * _Color;
 
-			//float sdb = sdBox(IN.worldPos, float3(1, 1, 1));
-			o.Albedo = c.rgb;// float3(sdb, sdb, sdb);
-			//o.Emission = c.rgb * _Emission;
+			o.Albedo = c.rgb;
+			o.Emission = c.rgb * _Emission;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
-			//o.Alpha = c.a;
+			o.Alpha = c.a;
 		}
 
 		ENDCG

@@ -5,27 +5,11 @@ using UnityEngine;
 
 public class GradientCreator : MonoBehaviour
 {
+    [Header("Gradient")]
+    public Gradient gradient;
 
-    public Gradient MyGradient;
+    [Header("Texture settings")]
     public TextureWrapMode Wrap;
-    //private TextureWrapMode _wrap;
-    //[SerializeField]
-    //public TextureWrapMode Wrap
-    //{
-    //    get { return _wrap; }
-    //    set
-    //    {
-    //        _wrap = value;
-    //        CreateTexture();
-    //    }
-    //}
-
-    public Texture2D GradientTexture;
-
-    public string FileName;
-
-    public Renderer OBNI;
-
     [SerializeField]
     public int TextureWidth
     {
@@ -50,6 +34,15 @@ public class GradientCreator : MonoBehaviour
     }
     public int m_textureHeight = 1;
 
+    public Texture2D GradientTexture;
+
+    [Header("File settings")]
+    public string FileName;
+
+    [Header("Renderer")]
+    public Renderer OBNI;
+    public string propertyName;
+
     public bool ApplyInRealtime;
 
     private void Start()
@@ -68,7 +61,6 @@ public class GradientCreator : MonoBehaviour
     {
         if (ApplyInRealtime)
             RenderGradient();
-
     }
 
     public void WriteToFile()
@@ -87,11 +79,11 @@ public class GradientCreator : MonoBehaviour
         {
             for (var j = 0; j < GradientTexture.height; j++)
             {
-                GradientTexture.SetPixel(i, j, MyGradient.Evaluate((float)i / GradientTexture.width).linear);
+                GradientTexture.SetPixel(i, j, gradient.Evaluate((float)i / GradientTexture.width).linear);
             }
         }
 
         GradientTexture.Apply();
-        OBNI.material.SetTexture("_MainTex", GradientTexture);
+        OBNI.material.SetTexture(propertyName, GradientTexture);
     }
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public enum NoiseType
 {
-    Perlin = 0, Voronoi = 1, Simplex = 2
+    Voronoi = 1, Simplex = 2
 }
 
 public class NoiseVolume : MonoBehaviour
@@ -35,6 +35,7 @@ public class NoiseVolume : MonoBehaviour
     private static List<Matrix4x4> noiseVolumeTransforms = new List<Matrix4x4>();
     private static List<Matrix4x4> noiseVolumeSettings = new List<Matrix4x4>();
     public static bool shaderInitialized = false;
+
     private bool hasInitialized = false;
 
     /*NoiseSettings:
@@ -50,7 +51,6 @@ public class NoiseVolume : MonoBehaviour
     {
         if (!shaderInitialized)
         {
-            Debug.Log("Initialized");
             for(var i=0; i<10; i++)
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
