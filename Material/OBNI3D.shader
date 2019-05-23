@@ -4,7 +4,9 @@ Shader "Custom/OBNI3D"
 {
     Properties
     {
-		_MainTex("Texture", 2D) = "white" {}
+		_MainTex("Main Texture", 2D) = "white" {}
+		_ColorChangeThreshold("COlor change threshold", Float) = 0
+		_DispTex("Disp Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
 
 		_ColorTexRepetition("ColorRepetition", Range(-10,100)) = 1
@@ -17,7 +19,7 @@ Shader "Custom/OBNI3D"
 
 		_DeformationAxis("Deformation axis", Vector) = (0,1,0,0)
 		_NormalInfluence("Normal influence in deformation", Float) = 0
-
+		
 		_Tess("Tessellation", Range(1,32)) = 4
     }
     SubShader
@@ -32,12 +34,12 @@ Shader "Custom/OBNI3D"
 		#include "../Plugins/Unity-Noises/Includes/SimplexNoise3D.hlsl"
 		#include "../Plugins/Unity-Noises/Includes/VoronoiNoise3D.hlsl"
 
-		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //tessellate:tessFixed 
+		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add//tessellate:tessFixed 
 		#pragma target 5.0
 
-		 int noiseVolumeCount = 0;
-		 float4x4 noiseVolumeSettings[10];
-		 float4x4 noiseVolumeTransforms[10];
+		int noiseVolumeCount = 0;
+		float4x4 noiseVolumeSettings[10];
+		float4x4 noiseVolumeTransforms[10];
 
 		/*NoiseSettings:
 		type      scale         offset      speed.x
@@ -58,7 +60,6 @@ Shader "Custom/OBNI3D"
 			return _Tess;
 		}
 */
-
 		float sdBox(float3 p, float3 b)
 		{
 			float3 d = abs(p) - b;
@@ -84,11 +85,11 @@ Shader "Custom/OBNI3D"
 				//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
 				if (noiseVolumeSettings[i][0][0] == 1) {
 					//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
-					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
+					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(mul(worldPos,noiseVolumeTransforms[i]), noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
 				}
 				if (noiseVolumeSettings[i][0][0] == 2) {
 					//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(worldPos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
+					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(mul(worldPos, noiseVolumeTransforms[i]), noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
 
 				}
 				noise += noiseVolumeSettings[i][0][2]; //offset
@@ -103,6 +104,7 @@ Shader "Custom/OBNI3D"
 		float _NormalInfluence;
 		float3 _DeformationAxis;
 		float _Tess;
+		float _ColorChangeThreshold;
 
 		struct Input
 		{
@@ -144,15 +146,23 @@ Shader "Custom/OBNI3D"
 		half _Glossiness;
 		half _Metallic;
 		sampler2D _MainTex;
+		sampler2D _DispTex;
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 
 			float disp = sumNoisesOnPosition(IN.worldPos);
 
-			float y = disp * _ColorTexRepetition * length(IN.normal * _NormalInfluence + _DeformationAxis);
+			float y = disp * _ColorTexRepetition;// * length(IN.normal * _NormalInfluence + _DeformationAxis);
 
-			float2 colorReader = (1.0f, _ColorOffset + y + _Time.x *_ColorReadingSpeed);
-			half4 c = tex2D(_MainTex, colorReader) * _Color;
+			float time = noiseVolumeSettings[0][2][1] == 1.0f ? noiseVolumeSettings[0][2][2] : _Time.x;
+			float2 colorReader = (1.0f, _ColorOffset + y + time *_ColorReadingSpeed);
+
+			half4 c = tex2D(_DispTex, colorReader) * _Color;
+			//float coeff = smoothstep(_ColorChangeThreshold, disp)
+			if(abs(disp) <= _ColorChangeThreshold) {
+				c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+				_Emission = 0.0;
+			}
 
 			o.Albedo = c.rgb;
 			o.Emission = c.rgb * _Emission;

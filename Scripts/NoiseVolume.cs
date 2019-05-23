@@ -45,7 +45,7 @@ public class NoiseVolume : MonoBehaviour
         intensity
 	*/
 
-    public int _noiseIndexInShader = -1;
+    private int _noiseIndexInShader = -1;
 
     private void Awake()
     {
