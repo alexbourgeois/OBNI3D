@@ -1,0 +1,3 @@
+[submodule "Plugins/Unity-Noises"]
+	path = Plugins/Unity-Noises
+	url = https://github.com/theoriz/unity-noises
