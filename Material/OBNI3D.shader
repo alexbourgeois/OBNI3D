@@ -11,6 +11,7 @@ Shader "Custom/OBNI3D"
 		_ColorReadingSpeed("ColorReadingSpeed", Range(-100,100)) = 0
 		_ColorOffset("Color Offset", Float) = 0
 
+		_NoiseEmission("Noise emission", Float) = 0
 		_Emission("Emission", Float) = 1
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
@@ -109,6 +110,7 @@ Shader "Custom/OBNI3D"
 			float2 uv_MainTex;
 			float3 worldPos;
 			float3 normal;
+			float noiseValue;
 		};
 
 
@@ -136,10 +138,12 @@ Shader "Custom/OBNI3D"
 			v.vertex.xyz += (newNormal * _NormalInfluence + _DeformationAxis) * disp;
 			v.normal = newNormal;
 			o.normal = newNormal;
+			o.noiseValue = disp;
 		}
 
 		fixed4 _Color;
 		float _ColorTexRepetition, _ColorReadingSpeed, _ColorOffset;
+		float _NoiseEmission;
 		half _Emission;
 		half _Glossiness;
 		half _Metallic;
@@ -147,7 +151,7 @@ Shader "Custom/OBNI3D"
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 
-			float disp = sumNoisesOnPosition(IN.worldPos);
+			float disp = IN.noiseValue;
 
 			float y = disp * _ColorTexRepetition * length(IN.normal * _NormalInfluence + _DeformationAxis);
 
@@ -155,7 +159,7 @@ Shader "Custom/OBNI3D"
 			half4 c = tex2D(_MainTex, colorReader) * _Color;
 
 			o.Albedo = c.rgb;
-			o.Emission = c.rgb * _Emission;
+			o.Emission = c.rgb * _Emission + _NoiseEmission * disp;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
