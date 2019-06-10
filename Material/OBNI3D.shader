@@ -46,7 +46,7 @@ Shader "Custom/OBNI3D"
 		type      scale         offset      speed.x
 		speed.y   speed.z       octave      octavescale
 		octaveAt  useCPUClock   clock       jitter
-		intensity
+		intensity volumeTransformAffectsNoise
 		*/
 
 		struct appdata {
@@ -82,15 +82,16 @@ Shader "Custom/OBNI3D"
 			for (int i = 0; i < noiseVolumeCount; i++) {
 				time = noiseVolumeSettings[i][2][1] == 1.0f ? noiseVolumeSettings[i][2][2] : _Time.y;
 				float noise = 0.0;
+				float3 pos = mul(worldPos,noiseVolumeTransforms[i])*noiseVolumeSettings[i][3][1] + (1-noiseVolumeSettings[i][3][1])*worldPos;
 
 				//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
 				if (noiseVolumeSettings[i][0][0] == 1) {
 					//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
-					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(mul(worldPos,noiseVolumeTransforms[i]), noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
+					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(pos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
 				}
 				if (noiseVolumeSettings[i][0][0] == 2) {
 					//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(mul(worldPos, noiseVolumeTransforms[i]), noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
+					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
 
 				}
 				noise += noiseVolumeSettings[i][0][2]; //offset

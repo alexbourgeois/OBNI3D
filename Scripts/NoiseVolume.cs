@@ -13,6 +13,7 @@ public class NoiseVolume : MonoBehaviour
     [Header("Global Settings")]
     public NoiseType noiseType;
     public float intensity = 1;
+    public bool volumeTransformAffectsNoise;
 
     [Header("Noise Settings")]
     [Range(0.0f, 10.0f)]
@@ -121,6 +122,7 @@ public class NoiseVolume : MonoBehaviour
         noiseSettings.m22 = Time.time;
         noiseSettings.m23 = jitter;
         noiseSettings.m30 = intensity;
+        noiseSettings.m31 = volumeTransformAffectsNoise ? 1.0f : 0.0f;
 
         noiseVolumeSettings[_noiseIndexInShader] = noiseSettings;
 
