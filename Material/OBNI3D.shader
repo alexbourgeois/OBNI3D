@@ -39,8 +39,8 @@ Shader "Custom/OBNI3D"
 		#pragma target 5.0
 
 		int noiseVolumeCount = 0;
-		float4x4 noiseVolumeSettings[10];
-		float4x4 noiseVolumeTransforms[10];
+		float4x4 noiseVolumeSettings[50];
+		float4x4 noiseVolumeTransforms[50];
 
 		/*NoiseSettings:
 		type      scale         offset      speed.x

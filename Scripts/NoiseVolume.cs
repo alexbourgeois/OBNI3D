@@ -52,7 +52,7 @@ public class NoiseVolume : MonoBehaviour
     {
         if (!shaderInitialized)
         {
-            for(var i=0; i<10; i++)
+            for(var i=0; i<50; i++)
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
                 noiseVolumeSettings.Add(new Matrix4x4());
