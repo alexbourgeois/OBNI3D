@@ -8,6 +8,7 @@ public enum NoiseType
     Voronoi = 1, Simplex = 2
 }
 
+
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Global Settings")]
@@ -21,6 +22,7 @@ public class NoiseVolume : MonoBehaviour
     [Range(-3.0f, 3.0f)]
     public float offset = 0;
     public Vector3 speed = Vector3.zero;
+    public Space speedSpace;
     [Range(1,6)]
     public int octave = 1;
     [Range(0, 10)]
@@ -31,6 +33,7 @@ public class NoiseVolume : MonoBehaviour
     public float jitter = 1.0f;
 
     public bool UseCPUClock = false;
+    private Vector3 _shaderSpeed;
 
     private static List<NoiseVolume> noiseVolumes = new List<NoiseVolume>();
     private static List<Matrix4x4> noiseVolumeTransforms = new List<Matrix4x4>();
@@ -108,13 +111,19 @@ public class NoiseVolume : MonoBehaviour
 
     public void UpdateNoiseSettings()
     {
+        _shaderSpeed = speed;
+
+        if(speedSpace == Space.Self)
+        {
+            _shaderSpeed = Quaternion.Euler(transform.localRotation.eulerAngles) * speed;
+        }
         var noiseSettings = noiseVolumeSettings[_noiseIndexInShader];
         noiseSettings.m00 = (int)noiseType;
         noiseSettings.m01 = scale;
         noiseSettings.m02 = offset;
-        noiseSettings.m03 = speed.x;
-        noiseSettings.m10 = speed.y;
-        noiseSettings.m11 = speed.z;
+        noiseSettings.m03 = _shaderSpeed.x;
+        noiseSettings.m10 = _shaderSpeed.y;
+        noiseSettings.m11 = _shaderSpeed.z;
         noiseSettings.m12 = octave;
         noiseSettings.m13 = octaveScale;
         noiseSettings.m20 = octaveAttenuation;
