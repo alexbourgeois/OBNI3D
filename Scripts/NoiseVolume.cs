@@ -8,7 +8,7 @@ public enum NoiseType
     Voronoi = 1, Simplex = 2
 }
 
-
+public enum TimeType { Absolute = 0, Relative = 1}
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Global Settings")]
@@ -33,7 +33,10 @@ public class NoiseVolume : MonoBehaviour
     public float jitter = 1.0f;
 
     public bool UseCPUClock = false;
+    public TimeType timeType = TimeType.Absolute;
+
     private Vector3 _shaderSpeed;
+    private Vector3 _speedOffset;
 
     private static List<NoiseVolume> noiseVolumes = new List<NoiseVolume>();
     private static List<Matrix4x4> noiseVolumeTransforms = new List<Matrix4x4>();
@@ -115,8 +118,9 @@ public class NoiseVolume : MonoBehaviour
 
         if(speedSpace == Space.Self)
         {
-            _shaderSpeed = Quaternion.Euler(transform.localRotation.eulerAngles) * speed;
+            _shaderSpeed = Quaternion.Euler(transform.rotation.eulerAngles) * speed;
         }
+
         var noiseSettings = noiseVolumeSettings[_noiseIndexInShader];
         noiseSettings.m00 = (int)noiseType;
         noiseSettings.m01 = scale;
@@ -132,6 +136,18 @@ public class NoiseVolume : MonoBehaviour
         noiseSettings.m23 = jitter;
         noiseSettings.m30 = intensity;
         noiseSettings.m31 = volumeTransformAffectsNoise ? 1.0f : 0.0f;
+
+        //Relative time
+        _speedOffset += Time.deltaTime * _shaderSpeed;
+
+        if (timeType == TimeType.Relative)
+        {
+            noiseSettings.m03 = _speedOffset.x;
+            noiseSettings.m10 = _speedOffset.y;
+            noiseSettings.m11 = _speedOffset.z;
+            noiseSettings.m22 = 1.0f;
+        }
+
 
         noiseVolumeSettings[_noiseIndexInShader] = noiseSettings;
 
