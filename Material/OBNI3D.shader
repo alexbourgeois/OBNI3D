@@ -13,6 +13,7 @@ Shader "OBNI/OBNI3D"
 		_GradientTexRepetition("GradientRepetition", Range(-10,100)) = 1
 		_GradientReadingSpeed("GradientReadingSpeed", Range(-100,100)) = 0
 		_GradientOffset("Gradient Offset", Float) = 0
+		_GradientFeathering("Gradient Feathering", Float) = 0
 
 		_NoiseEmission("Noise emission", Float) = 0
 		_Emission("Emission", Float) = 1
@@ -119,6 +120,7 @@ Shader "OBNI/OBNI3D"
 		float4 _Color;
 		float4 _GradientColor;
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
+		float _GradientFeathering;
 		float _NoiseEmission;
 		half _Emission;
 		half _Glossiness;
@@ -172,19 +174,21 @@ Shader "OBNI/OBNI3D"
 
 			float disp = IN.noiseValue;
 
-			float y = disp * _GradientTexRepetition;// * length(IN.normal * _NormalInfluence + _DeformationAxis);
+			float y = disp * _GradientTexRepetition;
 
 			float time = noiseVolumeSettings[0][2][1] == 1.0f ? noiseVolumeSettings[0][2][2] : _Time.x;
 			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
-			half4 c = tex2D(_GradientTex, colorReader) * _GradientColor;
-			//float coeff = smoothstep(_ColorChangeThreshold, disp)
-			if(abs(disp) <= _ColorChangeThreshold) {
-				c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-				_Emission = 0.0;
-			}
+			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
+			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
 
-			//o.Normal = IN.normal;
+			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
+			float4 c = lerp(texCol, gradCol, blendCoeff);
+
+			//if(abs(disp) <= _ColorChangeThreshold) {
+			//	c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+			//	_Emission = 0.0;
+			//}
 
 			half rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
