@@ -1,27 +1,35 @@
 ﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
-Shader "Custom/OBNI3D"
+Shader "OBNI/OBNI3D"
 {
     Properties
     {
 		_MainTex("Main Texture", 2D) = "white" {}
-		_ColorChangeThreshold("COlor change threshold", Float) = 0
-		_DispTex("Disp Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
+		_ColorChangeThreshold("Color change threshold", Float) = 0
+		_GradientTex("Gradient Texture", 2D) = "white" {}
+		[HDR] _GradientColor("Gradient Color", color) = (1,1,1,0)
 
-		_ColorTexRepetition("ColorRepetition", Range(-10,100)) = 1
-		_ColorReadingSpeed("ColorReadingSpeed", Range(-100,100)) = 0
-		_ColorOffset("Color Offset", Float) = 0
+		_GradientTexRepetition("GradientRepetition", Range(-10,100)) = 1
+		_GradientReadingSpeed("GradientReadingSpeed", Range(-100,100)) = 0
+		_GradientOffset("Gradient Offset", Float) = 0
+		_GradientFeathering("Gradient Feathering", Float) = 0
 
 		_NoiseEmission("Noise emission", Float) = 0
 		_Emission("Emission", Float) = 1
+
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
 
 		_DeformationAxis("Deformation axis", Vector) = (0,1,0,0)
 		_NormalInfluence("Normal influence in deformation", Float) = 0
+		_NormalDelta("Gradient distance in normal recomputation", Float) = 0.01
 		
-		_Tess("Tessellation", Range(1,32)) = 4
+		//_Tess("Tessellation", Range(1,32)) = 4
+
+		_RimColor("Rim Color", Color) = (0,1,0,1)
+		_RimPower("Rim Power", Float) = .5
+		_RimIntensity("Rim Intensity", Float) = 1
     }
     SubShader
     {
@@ -92,7 +100,6 @@ Shader "Custom/OBNI3D"
 				if (noiseVolumeSettings[i][0][0] == 2) {
 					//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
 					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
-
 				}
 				noise += noiseVolumeSettings[i][0][2]; //offset
 
@@ -101,18 +108,36 @@ Shader "Custom/OBNI3D"
 				sum += noise;
 			}
 			return sum;
+			//return noiseVolumeSettings[0][3][0] * sin(worldPos.x *noiseVolumeSettings[0][0][1] + _Time.y);
 		}
 
 		float _NormalInfluence;
+		float _NormalDelta;
 		float3 _DeformationAxis;
 		float _Tess;
 		float _ColorChangeThreshold;
+
+		float4 _Color;
+		float4 _GradientColor;
+		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
+		float _GradientFeathering;
+		float _NoiseEmission;
+		half _Emission;
+		half _Glossiness;
+		half _Metallic;
+		sampler2D _MainTex;
+		sampler2D _GradientTex;
+
+		float4 _RimColor;
+		float _RimPower;
+		float _RimIntensity;
 
 		struct Input
 		{
 			float2 uv_MainTex;
 			float3 worldPos;
 			float3 normal;
+			float3 viewDir;
 			float noiseValue;
 		};
 
@@ -126,54 +151,54 @@ Shader "Custom/OBNI3D"
 
 			float disp = sumNoisesOnPosition(worldPos);
 			
-			//Recopute normals
+			v.vertex.xyz += (v.normal * _NormalInfluence + _DeformationAxis) * disp;
+
+			//Recompute normals
 			float3 bitangent = cross(v.normal, v.tangent);
-			float3 position = v.vertex + v.normal  * disp;
 
-			float3 positionAndTangent = v.vertex + v.tangent * 0.001 + v.normal  * disp;
-			float3 positionAndBitangent = v.vertex + bitangent * 0.001 + v.normal  * disp;
+			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis) * sumNoisesOnPosition(mul(unity_ObjectToWorld, v.vertex + v.tangent * _NormalDelta));
+			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis)  * sumNoisesOnPosition(mul(unity_ObjectToWorld, v.vertex + bitangent * _NormalDelta));
 
-			float3 newTangent = (positionAndTangent - position); // leaves just 'tangent'
-			float3 newBitangent = (positionAndBitangent - position); // leaves just 'bitangent'
+			float3 newTangent = (positionAndTangent - v.vertex); // leaves just 'tangent'
+			float3 newBitangent = (positionAndBitangent - v.vertex); // leaves just 'bitangent'
 
 			float3 newNormal = normalize(cross(newTangent, newBitangent));
 
-			v.vertex.xyz += (newNormal * _NormalInfluence + _DeformationAxis) * disp;
 			v.normal = newNormal;
-			o.normal = newNormal;
+			
+			o.normal = v.normal;
 			o.noiseValue = disp;
 		}
-
-		fixed4 _Color;
-		float _ColorTexRepetition, _ColorReadingSpeed, _ColorOffset;
-		float _NoiseEmission;
-		half _Emission;
-		half _Glossiness;
-		half _Metallic;
-		sampler2D _MainTex;
-		sampler2D _DispTex;
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 
 			float disp = IN.noiseValue;
 
-			float y = disp * _ColorTexRepetition;// * length(IN.normal * _NormalInfluence + _DeformationAxis);
+			float y = disp * _GradientTexRepetition;
 
 			float time = noiseVolumeSettings[0][2][1] == 1.0f ? noiseVolumeSettings[0][2][2] : _Time.x;
-			float2 colorReader = (1.0f, _ColorOffset + y + time *_ColorReadingSpeed);
+			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
-			half4 c = tex2D(_DispTex, colorReader) * _Color;
-			//float coeff = smoothstep(_ColorChangeThreshold, disp)
-			if(abs(disp) <= _ColorChangeThreshold) {
-				c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-				_Emission = 0.0;
-			}
+			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
+			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
 
-			o.Albedo = c.rgb;
+			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
+			float4 c = lerp(texCol, gradCol, blendCoeff);
+
+			//if(abs(disp) <= _ColorChangeThreshold) {
+			//	c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+			//	_Emission = 0.0;
+			//}
+
+			half rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
+			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
+
+			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
 			o.Emission = c.rgb * _Emission + _NoiseEmission * disp;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
+			
 		}
 
 		ENDCG
