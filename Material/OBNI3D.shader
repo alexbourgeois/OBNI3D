@@ -4,29 +4,37 @@ Shader "OBNI/OBNI3D"
 {
     Properties
     {
+		[Header(Main Texture)]
 		_MainTex("Main Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
-		_ColorChangeThreshold("Color change threshold", Float) = 0
+		[Space]
+		[Header(Gradient Texture)]
+		_ColorChangeThreshold("Color Change Threshold", Float) = 0
 		_GradientTex("Gradient Texture", 2D) = "white" {}
 		[HDR] _GradientColor("Gradient Color", color) = (1,1,1,0)
-
-		_GradientTexRepetition("GradientRepetition", Range(-10,100)) = 1
-		_GradientReadingSpeed("GradientReadingSpeed", Range(-100,100)) = 0
+		_GradientTexRepetition("Gradient Repetition", Range(-10,100)) = 1
+		_GradientReadingSpeed("Gradient Reading Speed", Range(-100,100)) = 0
 		_GradientOffset("Gradient Offset", Float) = 0
 		_GradientFeathering("Gradient Feathering", Float) = 0
-
-		_NoiseEmission("Noise emission", Float) = 0
+		[Space]
+		[Header(Emission)]
+		_NoiseEmission("Noise Emission", Float) = 0
 		_Emission("Emission", Float) = 1
-
+		[Space]
+		[Header(Material)]
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
-
-		_DeformationAxis("Deformation axis", Vector) = (0,1,0,0)
-		_NormalInfluence("Normal influence in deformation", Float) = 0
-		_NormalDelta("Gradient distance in normal recomputation", Float) = 0.01
+		[Space]
+		[Header(Deformation)]
+		_DeformationAxis("Deformation Axis", Vector) = (0,1,0,0)
+		_NormalInfluence("Normal Influence in Deformation", Float) = 0
+		[Space]
+		[Header(Normal Recomputation)]
+		_NormalDelta("Gradient Distance in Normal Recomputation", Float) = 0.01
 		
 		//_Tess("Tessellation", Range(1,32)) = 4
-
+		[Space]
+		[Header(Rim Lighting)]
 		_RimColor("Rim Color", Color) = (0,1,0,1)
 		_RimPower("Rim Power", Float) = .5
 		_RimIntensity("Rim Intensity", Float) = 1
