@@ -76,11 +76,10 @@ Shader "OBNI/OBNI3D"
 				+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
 		}
 
-		float3 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
+		float opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
 		{
 			float4 tp = mul(t, p);
-			float3 p2 = float3(tp.x, tp.y, tp.z);
-			return sdBox(p2, float3(1,1,1));
+			return sdBox(tp.xyz, float3(0.5,0.5,0.5));
 		}
 
 		float sumNoisesOnPosition(float3 worldPos) {
@@ -103,12 +102,15 @@ Shader "OBNI/OBNI3D"
 				}
 				noise += noiseVolumeSettings[i][0][2]; //offset
 
-				noise *= clamp(1 - opTx(float4(worldPos, 1), noiseVolumeTransforms[i]), 0, 1);
+				//noise *= opTx(float4(worldPos, 1), noiseVolumeTransforms[i]) > 0 ? 0 : 1;
+				float volCoeff = opTx(float4(worldPos, 1), noiseVolumeTransforms[i]);
+				volCoeff = -volCoeff;
+				volCoeff = max(volCoeff, 0);
+				noise *= lerp(0, 1, volCoeff / (noiseVolumeSettings[i][3][2] + 0.00001));
 
 				sum += noise;
 			}
 			return sum;
-			//return noiseVolumeSettings[0][3][0] * sin(worldPos.x *noiseVolumeSettings[0][0][1] + _Time.y);
 		}
 
 		float _NormalInfluence;
@@ -122,9 +124,9 @@ Shader "OBNI/OBNI3D"
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
 		float _GradientFeathering;
 		float _NoiseEmission;
-		half _Emission;
-		half _Glossiness;
-		half _Metallic;
+		float _Emission;
+		float _Glossiness;
+		float _Metallic;
 		sampler2D _MainTex;
 		sampler2D _GradientTex;
 
@@ -185,12 +187,7 @@ Shader "OBNI/OBNI3D"
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
 			float4 c = lerp(texCol, gradCol, blendCoeff);
 
-			//if(abs(disp) <= _ColorChangeThreshold) {
-			//	c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-			//	_Emission = 0.0;
-			//}
-
-			half rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
+			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
