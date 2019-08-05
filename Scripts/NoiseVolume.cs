@@ -12,8 +12,10 @@ public enum TimeType { Absolute = 0, Relative = 1}
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Global Settings")]
-    public NoiseType noiseType;
+    public NoiseType noiseType = NoiseType.Simplex;
     public float intensity = 1;
+	[Range(0.0f, 10.0f)]
+	public float falloffRadius = 0;
     public bool volumeTransformAffectsNoise;
 
     [Header("Noise Settings")]
@@ -136,6 +138,7 @@ public class NoiseVolume : MonoBehaviour
         noiseSettings.m23 = jitter;
         noiseSettings.m30 = intensity;
         noiseSettings.m31 = volumeTransformAffectsNoise ? 1.0f : 0.0f;
+		noiseSettings.m32 = falloffRadius;
 
         //Relative time
         _speedOffset += Time.deltaTime * _shaderSpeed;
@@ -156,7 +159,7 @@ public class NoiseVolume : MonoBehaviour
 
     public void UpdateNoiseTransform()
     {
-        noiseVolumeTransforms[_noiseIndexInShader] = transform.localToWorldMatrix.inverse;
+        noiseVolumeTransforms[_noiseIndexInShader] = transform.worldToLocalMatrix;
         Shader.SetGlobalMatrixArray("noiseVolumeTransforms", noiseVolumeTransforms);
     }
     
@@ -168,8 +171,8 @@ public class NoiseVolume : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.black;
+        Gizmos.color = Color.yellow;
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one * 4);
+        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
     }
 }

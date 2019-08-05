@@ -4,29 +4,37 @@ Shader "OBNI/OBNI3D"
 {
     Properties
     {
+		[Header(Main Texture)]
 		_MainTex("Main Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
-		_ColorChangeThreshold("Color change threshold", Float) = 0
+		[Space]
+		[Header(Gradient Texture)]
+		_ColorChangeThreshold("Color Change Threshold", Float) = 0
 		_GradientTex("Gradient Texture", 2D) = "white" {}
 		[HDR] _GradientColor("Gradient Color", color) = (1,1,1,0)
-
-		_GradientTexRepetition("GradientRepetition", Range(-10,100)) = 1
-		_GradientReadingSpeed("GradientReadingSpeed", Range(-100,100)) = 0
+		_GradientTexRepetition("Gradient Repetition", Range(-10,100)) = 1
+		_GradientReadingSpeed("Gradient Reading Speed", Range(-100,100)) = 0
 		_GradientOffset("Gradient Offset", Float) = 0
 		_GradientFeathering("Gradient Feathering", Float) = 0
-
-		_NoiseEmission("Noise emission", Float) = 0
+		[Space]
+		[Header(Emission)]
+		_NoiseEmission("Noise Emission", Float) = 0
 		_Emission("Emission", Float) = 1
-
+		[Space]
+		[Header(Material)]
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
-
-		_DeformationAxis("Deformation axis", Vector) = (0,1,0,0)
-		_NormalInfluence("Normal influence in deformation", Float) = 0
-		_NormalDelta("Gradient distance in normal recomputation", Float) = 0.01
+		[Space]
+		[Header(Deformation)]
+		_DeformationAxis("Deformation Axis", Vector) = (0,1,0,0)
+		_NormalInfluence("Normal Influence in Deformation", Float) = 0
+		[Space]
+		[Header(Normal Recomputation)]
+		_NormalDelta("Gradient Distance in Normal Recomputation", Float) = 0.01
 		
 		//_Tess("Tessellation", Range(1,32)) = 4
-
+		[Space]
+		[Header(Rim Lighting)]
 		_RimColor("Rim Color", Color) = (0,1,0,1)
 		_RimPower("Rim Power", Float) = .5
 		_RimIntensity("Rim Intensity", Float) = 1
@@ -76,11 +84,10 @@ Shader "OBNI/OBNI3D"
 				+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
 		}
 
-		float3 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
+		float opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
 		{
 			float4 tp = mul(t, p);
-			float3 p2 = float3(tp.x, tp.y, tp.z);
-			return sdBox(p2, float3(1,1,1));
+			return sdBox(tp.xyz, float3(0.5,0.5,0.5));
 		}
 
 		float sumNoisesOnPosition(float3 worldPos) {
@@ -103,12 +110,15 @@ Shader "OBNI/OBNI3D"
 				}
 				noise += noiseVolumeSettings[i][0][2]; //offset
 
-				noise *= clamp(1 - opTx(float4(worldPos, 1), noiseVolumeTransforms[i]), 0, 1);
+				//noise *= opTx(float4(worldPos, 1), noiseVolumeTransforms[i]) > 0 ? 0 : 1;
+				float volCoeff = opTx(float4(worldPos, 1), noiseVolumeTransforms[i]);
+				volCoeff = -volCoeff;
+				volCoeff = max(volCoeff, 0);
+				noise *= lerp(0, 1, volCoeff / (noiseVolumeSettings[i][3][2] + 0.00001));
 
 				sum += noise;
 			}
 			return sum;
-			//return noiseVolumeSettings[0][3][0] * sin(worldPos.x *noiseVolumeSettings[0][0][1] + _Time.y);
 		}
 
 		float _NormalInfluence;
@@ -122,9 +132,9 @@ Shader "OBNI/OBNI3D"
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
 		float _GradientFeathering;
 		float _NoiseEmission;
-		half _Emission;
-		half _Glossiness;
-		half _Metallic;
+		float _Emission;
+		float _Glossiness;
+		float _Metallic;
 		sampler2D _MainTex;
 		sampler2D _GradientTex;
 
@@ -185,12 +195,7 @@ Shader "OBNI/OBNI3D"
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
 			float4 c = lerp(texCol, gradCol, blendCoeff);
 
-			//if(abs(disp) <= _ColorChangeThreshold) {
-			//	c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-			//	_Emission = 0.0;
-			//}
-
-			half rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
+			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
