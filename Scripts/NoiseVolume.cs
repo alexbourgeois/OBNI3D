@@ -14,8 +14,8 @@ public class NoiseVolume : MonoBehaviour
     [Header("Global Settings")]
     public NoiseType noiseType = NoiseType.Simplex;
     public float intensity = 1;
-	[Range(0.0f, 10.0f)]
-	public float falloffRadius = 0;
+	[Range(0.1f, 10.0f)]
+	public float falloffRadius = 0.1f;
     public bool volumeTransformAffectsNoise;
 
     [Header("Noise Settings")]
@@ -171,7 +171,7 @@ public class NoiseVolume : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.yellow;
+        Gizmos.color = new Color(1.0f, 0.5f, 0.0f);
         Gizmos.matrix = transform.localToWorldMatrix;
         Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
     }
