@@ -8,10 +8,16 @@ public enum NoiseType
     Voronoi = 1, Simplex = 2
 }
 
+public enum VolumeShape
+{
+    Sphere = 1, Box = 2
+}
+
 public enum TimeType { Absolute = 0, Relative = 1}
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Global Settings")]
+    public VolumeShape volumeShape = VolumeShape.Box;
     public NoiseType noiseType = NoiseType.Simplex;
     public float intensity = 1;
 	[Range(0.1f, 10.0f)]
@@ -19,10 +25,8 @@ public class NoiseVolume : MonoBehaviour
     public bool volumeTransformAffectsNoise;
 
     [Header("Noise Settings")]
-    [Range(0.0f, 10.0f)]
-    public float scale = 5;
-    [Range(-3.0f, 3.0f)]
     public float offset = 0;
+    public float scale = 5;
     public Vector3 speed = Vector3.zero;
     public Space speedSpace;
     [Range(1,6)]
@@ -139,6 +143,7 @@ public class NoiseVolume : MonoBehaviour
         noiseSettings.m30 = intensity;
         noiseSettings.m31 = volumeTransformAffectsNoise ? 1.0f : 0.0f;
 		noiseSettings.m32 = falloffRadius;
+        noiseSettings.m33 = (int)volumeShape;
 
         //Relative time
         _speedOffset += Time.deltaTime * _shaderSpeed;
@@ -173,6 +178,15 @@ public class NoiseVolume : MonoBehaviour
     {
         Gizmos.color = new Color(1.0f, 0.5f, 0.0f);
         Gizmos.matrix = transform.localToWorldMatrix;
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+
+        switch(volumeShape)
+        {
+            case VolumeShape.Box:
+                Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+                break;
+            case VolumeShape.Sphere:
+                Gizmos.DrawWireSphere(Vector3.zero, 1.0f);
+                break;
+        }
     }
 }

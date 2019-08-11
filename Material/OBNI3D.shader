@@ -62,7 +62,7 @@ Shader "OBNI/OBNI3D"
 		type      scale         offset      speed.x
 		speed.y   speed.z       octave      octavescale
 		octaveAt  useCPUClock   clock       jitter
-		intensity volumeTransformAffectsNoise
+		intensity volumeTransformAffectsNoise fallOff   shape
 		*/
 
 		struct appdata {
@@ -84,10 +84,25 @@ Shader "OBNI/OBNI3D"
 				+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
 		}
 
-		float opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
+		float sdSphere(float3 p, float s)
 		{
-			float4 tp = mul(t, p);
-			return sdBox(tp.xyz, float3(0.5,0.5,0.5));
+			return length(p) - s;
+		}
+
+		float4 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
+		{
+			return mul(t, p);
+		}
+
+		float sdGlobal(float type, in float4 p, in float4x4 t) {
+			if (type == 1) { //Sphere
+				return sdSphere(opTx(p, t).xyz, 1.0);
+			}
+			if (type == 2) { //Box
+				return sdBox(opTx(p, t).xyz, float3(0.5, 0.5, 0.5));
+			}
+
+			return 0;
 		}
 
 		float sumNoisesOnPosition(float3 worldPos) {
@@ -111,7 +126,7 @@ Shader "OBNI/OBNI3D"
 				noise += noiseVolumeSettings[i][0][2]; //offset
 
 				//noise *= opTx(float4(worldPos, 1), noiseVolumeTransforms[i]) > 0 ? 0 : 1;
-				float volCoeff = opTx(float4(worldPos, 1), noiseVolumeTransforms[i]);
+				float volCoeff = sdGlobal(noiseVolumeSettings[i][3][3], float4(worldPos, 1), noiseVolumeTransforms[i]);
 				volCoeff = -volCoeff;
 				volCoeff = max(volCoeff, 0);
 				noise *= lerp(0, 1, volCoeff / (noiseVolumeSettings[i][3][2] + 0.00001));
