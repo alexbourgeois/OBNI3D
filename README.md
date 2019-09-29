@@ -21,3 +21,7 @@ Download the [Unity-Noises](url=https://github.com/Theoriz/Unity-Noises) reposit
 4. Play !
 
 Note that only vertices of an object with the ONBI3D shader that are inside a NoiseVolume will be affected by noise.
+
+## Demo
+
+The demo project can be found here : https://github.com/alexbourgeois/OBNI3D-demo 
