@@ -1,4 +1,4 @@
-# OBNI 3D | Objet Bruité Non Identifié 3D
+# OBNI 3D - Objet Bruité Non Identifié 3D
 
 ## Installation
 
