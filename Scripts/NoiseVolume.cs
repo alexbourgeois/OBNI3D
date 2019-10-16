@@ -23,17 +23,23 @@ public enum TimeType { Absolute = 0, Relative = 1}
 [ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
 {
-    [Header("Global Settings")]
-    public VolumeShape volumeShape = VolumeShape.Box;
-    public NoiseType noiseType = NoiseType.Simplex;
-    public BlendOperator blendOperator = BlendOperator.Addition;
+    [Header("Time Settings")]
+    public bool SyncWithCPU = false;
+    public TimeType timeType = TimeType.Absolute;
 
-    public float intensity = 1;
+    [Header("Shape Settings")]
+    public VolumeShape volumeShape = VolumeShape.Box;
 	[Range(0.1f, 10.0f)]
 	public float falloffRadius = 0.1f;
     public bool volumeTransformAffectsNoise;
 
+    [Header("Blend Settings")]
+    public float intensity = 1;
+    public BlendOperator blendOperator = BlendOperator.Addition;
+
     [Header("Noise Settings")]
+    public NoiseType noiseType = NoiseType.Simplex;
+    public int seed;
     public float offset = 0;
     public float scale = 5;
     public Vector3 speed = Vector3.zero;
@@ -46,8 +52,9 @@ public class NoiseVolume : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float jitter = 1.0f;
 
-    public bool UseCPUClock = false;
-    public TimeType timeType = TimeType.Absolute;
+
+
+    private int _nbParameter = 18;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -59,13 +66,6 @@ public class NoiseVolume : MonoBehaviour
 
     private bool hasInitialized = false;
 
-    /*NoiseSettings:
-		type      scale         offset      speed.x
-		speed.y   speed.z       octave      octavescale
-		octaveAt  useCPUClock   clock       jitter
-        intensity
-	*/
-
     private int _noiseIndexInShader = -1;
 
     private void Awake()
@@ -76,7 +76,7 @@ public class NoiseVolume : MonoBehaviour
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
             }
-            for (var i = 0; i < 170; i++)
+            for (var i = 0; i < _nbParameter * 10; i++)
             {
                 noiseVolumeSettings.Add(0.0f);
             }
@@ -115,7 +115,7 @@ public class NoiseVolume : MonoBehaviour
         Shader.SetGlobalInt("noiseVolumeCount", volumeCount - 1);
 
         noiseVolumeSettings.RemoveAt(_noiseIndexInShader);
-        for (int j = 0; j < 17; j++)
+        for (int j = 0; j < _nbParameter; j++)
             noiseVolumeSettings[_noiseIndexInShader + j] = 0.0f;
 
         noiseVolumeTransforms.RemoveAt(_noiseIndexInShader);
@@ -139,33 +139,34 @@ public class NoiseVolume : MonoBehaviour
             _shaderSpeed = Quaternion.Euler(transform.rotation.eulerAngles) * speed;
         }
 
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 0] = (float)noiseType;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 1] = scale;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 2] = offset;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 3] = _shaderSpeed.x;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 4] = _shaderSpeed.y;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 5] = _shaderSpeed.z;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 6] = (int)octave;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 7] = octaveScale;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 8] = octaveAttenuation;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 9] = UseCPUClock ? 1.0f : 0.0f;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 10] = Time.time;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 11] = jitter;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 12] = intensity;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 13] = volumeTransformAffectsNoise ? 1.0f : 0.0f;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 14] = falloffRadius;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 15] = (int)volumeShape;
-        noiseVolumeSettings[_noiseIndexInShader * 17 + 16] = (int)blendOperator;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (float)noiseType;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 1] = scale;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 2] = offset;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _shaderSpeed.x;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 4] = _shaderSpeed.y;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 5] = _shaderSpeed.z;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 6] = (int)octave;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 7] = octaveScale;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 8] = octaveAttenuation;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 9] = SyncWithCPU ? 1.0f : 0.0f;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = Time.time;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 11] = jitter;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 12] = intensity;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 13] = volumeTransformAffectsNoise ? 1.0f : 0.0f;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 14] = falloffRadius;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 15] = (int)volumeShape;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 16] = (int)blendOperator;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 17] = seed;
 
         //Relative time
         _speedOffset += Time.deltaTime * _shaderSpeed;
 
         if (timeType == TimeType.Relative)
         {
-            noiseVolumeSettings[_noiseIndexInShader * 17 + 3] = _speedOffset.x;
-            noiseVolumeSettings[_noiseIndexInShader * 17 + 4] = _speedOffset.y;
-            noiseVolumeSettings[_noiseIndexInShader * 17 + 5] = _speedOffset.z;
-            noiseVolumeSettings[_noiseIndexInShader * 17 + 10] = 1.0f;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _speedOffset.x;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 4] = _speedOffset.y;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 5] = _speedOffset.z;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = 1.0f;
         }
 
         Shader.SetGlobalFloatArray("noiseVolumeSettings", noiseVolumeSettings);

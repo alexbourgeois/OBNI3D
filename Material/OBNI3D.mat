@@ -43,7 +43,7 @@ Material:
     - _GradientReadingSpeed: 0
     - _GradientTexRepetition: 1
     - _Metallic: 0
-    - _NoiseEmission: 0.26
+    - _NoiseEmission: 0
     - _NormalDelta: 0.25
     - _NormalInfluence: 1
     - _RimIntensity: 0

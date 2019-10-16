@@ -92,6 +92,9 @@ Shader "OBNI/OBNI3D"
 		float _RimPower;
 		float _RimIntensity;
 
+
+		float referenceAmplitude = 1;
+
 		struct Input
 		{
 			float2 uv_MainTex;
@@ -143,6 +146,7 @@ Shader "OBNI/OBNI3D"
 			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
 
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
+			//float blendCoeff = smoothstep((_ColorChangeThreshold - _GradientFeathering) * referenceAmplitude, (_ColorChangeThreshold + _GradientFeathering) * referenceAmplitude, disp);
 			float4 c = lerp(texCol, gradCol, blendCoeff);
 
 			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
