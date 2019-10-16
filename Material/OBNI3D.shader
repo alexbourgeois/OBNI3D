@@ -47,16 +47,10 @@ Shader "OBNI/OBNI3D"
         CGPROGRAM
 // Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 #pragma exclude_renderers gles
-
-		#include "../Plugins/Unity-Noises/Includes/SimplexNoise3D.hlsl"
-		#include "../Plugins/Unity-Noises/Includes/VoronoiNoise3D.hlsl"
+		
+		#include "NoiseBlender.hlsl"
 
 		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add//tessellate:tessFixed 
-		#pragma target 5.0
-
-		int noiseVolumeCount = 0;
-		float4x4 noiseVolumeSettings[50];
-		float4x4 noiseVolumeTransforms[50];
 
 		/*NoiseSettings:
 		type      scale         offset      speed.x
@@ -75,66 +69,7 @@ Shader "OBNI/OBNI3D"
 		/*float4 tessFixed() //Can't use tesselation with out Input in vertex function
 		{
 			return _Tess;
-		}
-*/
-		float sdBox(float3 p, float3 b)
-		{
-			float3 d = abs(p) - b;
-			return length(max(d, 0.0))
-				+ min(max(d.x, max(d.y, d.z)), 0.0); // remove this line for an only partially signed sdf 
-		}
-
-		float sdSphere(float3 p, float s)
-		{
-			return length(p) - s;
-		}
-
-		float4 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
-		{
-			return mul(t, p);
-		}
-
-		float sdGlobal(float type, in float4 p, in float4x4 t) {
-			if (type == 1) { //Sphere
-				return sdSphere(opTx(p, t).xyz, 1.0);
-			}
-			if (type == 2) { //Box
-				return sdBox(opTx(p, t).xyz, float3(0.5, 0.5, 0.5));
-			}
-
-			return 0;
-		}
-
-		float sumNoisesOnPosition(float3 worldPos) {
-			float sum = 0.0;
-			float time = 0.0;
-
-			for (int i = 0; i < noiseVolumeCount; i++) {
-				time = noiseVolumeSettings[i][2][1] == 1.0f ? noiseVolumeSettings[i][2][2] : _Time.y;
-				float noise = 0.0;
-				float3 pos = mul(worldPos,noiseVolumeTransforms[i])*noiseVolumeSettings[i][3][1] + (1-noiseVolumeSettings[i][3][1])*worldPos;
-
-				//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-				if (noiseVolumeSettings[i][0][0] == 1) {
-					//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
-					noise += noiseVolumeSettings[i][3][0] * VoronoiNoise_Octaves(pos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], noiseVolumeSettings[i][2][3], time);
-				}
-				if (noiseVolumeSettings[i][0][0] == 2) {
-					//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
-					noise += noiseVolumeSettings[i][3][0] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i][0][1], float3(noiseVolumeSettings[i][0][3], noiseVolumeSettings[i][1][0], noiseVolumeSettings[i][1][1]), uint(noiseVolumeSettings[i][1][2]), noiseVolumeSettings[i][1][3], noiseVolumeSettings[i][2][0], time);
-				}
-				noise += noiseVolumeSettings[i][0][2]; //offset
-
-				//noise *= opTx(float4(worldPos, 1), noiseVolumeTransforms[i]) > 0 ? 0 : 1;
-				float volCoeff = sdGlobal(noiseVolumeSettings[i][3][3], float4(worldPos, 1), noiseVolumeTransforms[i]);
-				volCoeff = -volCoeff;
-				volCoeff = max(volCoeff, 0);
-				noise *= lerp(0, 1, volCoeff / (noiseVolumeSettings[i][3][2] + 0.00001));
-
-				sum += noise;
-			}
-			return sum;
-		}
+		}*/
 
 		float _NormalInfluence;
 		float _NormalDelta;
@@ -201,7 +136,7 @@ Shader "OBNI/OBNI3D"
 
 			float y = disp * _GradientTexRepetition;
 
-			float time = noiseVolumeSettings[0][2][1] == 1.0f ? noiseVolumeSettings[0][2][2] : _Time.x;
+			float time = noiseVolumeSettings[9] == 1.0f ? noiseVolumeSettings[10] : _Time.y;
 			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
 			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
