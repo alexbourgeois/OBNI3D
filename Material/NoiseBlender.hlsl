@@ -4,7 +4,7 @@
 
 int noiseVolumeCount = 0;
 float4x4 noiseVolumeTransforms[10]; //Max 10 volumes
-float noiseVolumeSettings[180]; //10 * 18 parameters
+float noiseVolumeSettings[190]; //10 * 19 parameters
 
 /*NoiseSettings:
 type      scale         offset      speed.x
@@ -44,8 +44,8 @@ float sdGlobal(float type, in float4 p, in float4x4 t) {
 float GetNoiseOnPosition(float3 worldPos) {
 	float total = 0.0;
 	float time = 0.0;
-
-	for (int i = 0; i < noiseVolumeCount * 18; i += 18) {
+	
+	for (int i = 0; i < noiseVolumeCount * 19; i += 19) {
 
 		if (noiseVolumeSettings[i] == 3) { //mask
 			continue;
@@ -53,9 +53,8 @@ float GetNoiseOnPosition(float3 worldPos) {
 
 		time = (noiseVolumeSettings[i + 9] == 1.0f) ? noiseVolumeSettings[i + 10] : _Time.y;
 		float currentNoiseValue = 0.0f;
-		float3 pos = mul(worldPos, noiseVolumeTransforms[i % 16]) * noiseVolumeSettings[i + 13] + (1 - noiseVolumeSettings[i + 13]) * worldPos;
+		float3 pos = mul(worldPos, noiseVolumeTransforms[i % 18]) * noiseVolumeSettings[i + 13] + (1 - noiseVolumeSettings[i + 13]) * worldPos;
 
-		//output += PerlinNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
 		if (noiseVolumeSettings[i] == 1) {
 			//output += VoronoiNoise_Octaves(float3(uv,0), _Scale, float3(0, 0, _Speed), int(_Octave), _OctaveScale, _Attenuation, _Jitter, time);
 			currentNoiseValue = noiseVolumeSettings[i + 12] * VoronoiNoise_Octaves(pos, noiseVolumeSettings[i + 1], float3(noiseVolumeSettings[i + 3], noiseVolumeSettings[i + 4], noiseVolumeSettings[i + 5]), noiseVolumeSettings[i + 6], noiseVolumeSettings[i + 7], noiseVolumeSettings[i + 8], noiseVolumeSettings[i + 11], time + noiseVolumeSettings[i + 17]);
@@ -65,9 +64,23 @@ float GetNoiseOnPosition(float3 worldPos) {
 			currentNoiseValue = noiseVolumeSettings[i + 12] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i + 1], float3(noiseVolumeSettings[i + 3], noiseVolumeSettings[i + 4], noiseVolumeSettings[i + 5]), uint(noiseVolumeSettings[i + 6]), noiseVolumeSettings[i + 7], noiseVolumeSettings[i + 8], time + noiseVolumeSettings[i + 17]);
 		}
 
+		//PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3
+		if (noiseVolumeSettings[i + 18] == 0) {
+			currentNoiseValue = currentNoiseValue;
+		}
+		if (noiseVolumeSettings[i + 18] == 1) {
+			currentNoiseValue = clamp(currentNoiseValue, 0, 1000000);
+		}
+		if (noiseVolumeSettings[i + 18] == 2) {
+			currentNoiseValue = clamp(currentNoiseValue, -1000000, 0);
+		}
+		if (noiseVolumeSettings[i + 18] == 3) {
+			currentNoiseValue = abs(currentNoiseValue);
+		}
+
 		currentNoiseValue += noiseVolumeSettings[i + 2]; //offset
 
-		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(worldPos, 1), noiseVolumeTransforms[i % 17]);
+		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(worldPos, 1), noiseVolumeTransforms[i % 18]);
 		volCoeff = -volCoeff;
 		volCoeff = max(volCoeff, 0);
 
@@ -93,9 +106,9 @@ float GetNoiseOnPosition(float3 worldPos) {
 	}
 
 	//MASK
-	for (int i = 0; i < noiseVolumeCount * 18; i += 18) {
+	for (int i = 0; i < noiseVolumeCount * 19; i += 19) {
 		if (noiseVolumeSettings[i] == 3) { //mask
-			float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(worldPos, 1), noiseVolumeTransforms[i % 17]);
+			float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(worldPos, 1), noiseVolumeTransforms[i % 18]);
 			volCoeff = -volCoeff;
 			volCoeff = max(volCoeff, 0);
 			total = lerp(total, 0, clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1));

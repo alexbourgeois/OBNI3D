@@ -18,6 +18,11 @@ public enum NoiseType
     Voronoi = 1, Simplex = 2
 }
 
+public enum NoiseValueRemapType
+{ 
+    PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3
+}
+
 public enum BlendOperator
 {
     Addition = 1, Substraction = 2, Multiplication = 3, Division = 4, Modulo = 5
@@ -41,6 +46,7 @@ public class NoiseVolume : MonoBehaviour
 
     [Header("Blend Settings")]
     public float intensity = 1;
+    public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
 
     [Header("Noise Settings")]
@@ -58,9 +64,7 @@ public class NoiseVolume : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float jitter = 1.0f;
 
-
-
-    private int _nbParameter = 18;
+    private int _nbParameter = 19;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -147,7 +151,7 @@ public class NoiseVolume : MonoBehaviour
 
         if (volumeType == VolumeType.Noise)
         {
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (float)noiseType;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (int)noiseType;
         }
         if (volumeType == VolumeType.Mask)
         {
@@ -170,7 +174,7 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 15] = (int)volumeShape;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 16] = (int)blendOperator;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 17] = seed;
-
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 18] = (int)valueRemappingType; 
 
         _speedOffset += Time.deltaTime * _shaderSpeed;
         if (timeType == TimeType.Relative)
