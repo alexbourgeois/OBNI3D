@@ -35,7 +35,7 @@ public class NoiseVolume : MonoBehaviour
     [Header("Shape Settings")]
     public VolumeType volumeType = VolumeType.Noise; 
     public VolumeShape volumeShape = VolumeShape.Box;
-	[Range(0.1f, 10.0f)]
+	[Range(0.0f, 10.0f)]
 	public float falloffRadius = 0.1f;
     public bool volumeTransformAffectsNoise;
 
@@ -205,7 +205,16 @@ public class NoiseVolume : MonoBehaviour
     
     private void OnDrawGizmos()
     {
-        Gizmos.color = new Color(1.0f, 0.5f, 0.0f);
+        var color = new Color(1.0f, 0.5f, 0.0f);//Yellow
+        if(volumeType == VolumeType.Mask)
+        {
+            color = new Color(0.0f, 0.5f, 1.0f);//Blue
+        }
+        if (!this.enabled)
+        {
+            color *= 0.5f; //Darker     //new Color(.5f, 0.25f, 0.0f);//Brown
+        }
+        Gizmos.color = color;
         Gizmos.matrix = transform.localToWorldMatrix;
 
         switch(volumeShape)
