@@ -3,14 +3,19 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-public enum NoiseType
+public enum VolumeType
 {
-    Voronoi = 1, Simplex = 2
+    Noise = 0, Mask = 1
 }
 
 public enum VolumeShape
 {
     Sphere = 1, Box = 2
+}
+
+public enum NoiseType
+{
+    Voronoi = 1, Simplex = 2
 }
 
 public enum BlendOperator
@@ -28,6 +33,7 @@ public class NoiseVolume : MonoBehaviour
     public TimeType timeType = TimeType.Absolute;
 
     [Header("Shape Settings")]
+    public VolumeType volumeType = VolumeType.Noise; 
     public VolumeShape volumeShape = VolumeShape.Box;
 	[Range(0.1f, 10.0f)]
 	public float falloffRadius = 0.1f;
@@ -139,7 +145,14 @@ public class NoiseVolume : MonoBehaviour
             _shaderSpeed = Quaternion.Euler(transform.rotation.eulerAngles) * speed;
         }
 
-        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (float)noiseType;
+        if (volumeType == VolumeType.Noise)
+        {
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (float)noiseType;
+        }
+        if (volumeType == VolumeType.Mask)
+        {
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = 3;
+        }
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 1] = scale;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 2] = offset;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _shaderSpeed.x;
@@ -158,11 +171,11 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 16] = (int)blendOperator;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 17] = seed;
 
-        //Relative time
-        _speedOffset += Time.deltaTime * _shaderSpeed;
 
+        _speedOffset += Time.deltaTime * _shaderSpeed;
         if (timeType == TimeType.Relative)
         {
+            //Relative time
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _speedOffset.x;
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 4] = _speedOffset.y;
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 5] = _speedOffset.z;
