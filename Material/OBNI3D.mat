@@ -38,7 +38,7 @@ Material:
     - _ColorTexRepetition: 3.8
     - _Emission: -0
     - _Glossiness: 0
-    - _GradientFeathering: 0
+    - _GradientFeathering: 0.25
     - _GradientOffset: 0
     - _GradientReadingSpeed: 0
     - _GradientTexRepetition: 1
