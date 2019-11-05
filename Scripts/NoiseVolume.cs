@@ -13,13 +13,18 @@ public enum VolumeShape
     Sphere = 1, Box = 2
 }
 
+public enum NoiseSpace
+{
+    World = 1, Volume = 2
+}
+
 public enum NoiseType
 {
     Voronoi = 1, Simplex = 2
 }
 
 public enum NoiseValueRemapType
-{ 
+{
     PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3
 }
 
@@ -28,7 +33,7 @@ public enum BlendOperator
     Addition = 1, Substraction = 2, Multiplication = 3, Division = 4, Modulo = 5
 }
 
-public enum TimeType { Absolute = 0, Relative = 1}
+public enum TimeType { Absolute = 0, Relative = 1 }
 
 [ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
@@ -38,10 +43,10 @@ public class NoiseVolume : MonoBehaviour
     public TimeType timeType = TimeType.Absolute;
 
     [Header("Shape Settings")]
-    public VolumeType volumeType = VolumeType.Noise; 
+    public VolumeType volumeType = VolumeType.Noise;
     public VolumeShape volumeShape = VolumeShape.Box;
-	[Range(0.0f, 10.0f)]
-	public float falloffRadius = 0.1f;
+    [Range(0.0f, 10.0f)]
+    public float falloffRadius = 0.1f;
     public bool volumeTransformAffectsNoise;
 
     [Header("Blend Settings")]
@@ -51,12 +56,13 @@ public class NoiseVolume : MonoBehaviour
 
     [Header("Noise Settings")]
     public NoiseType noiseType = NoiseType.Simplex;
+    public NoiseSpace noiseSpace = NoiseSpace.World;
     public int seed;
     public float offset = 0;
     public float scale = 5;
     public Vector3 speed = Vector3.zero;
     public Space speedSpace;
-    [Range(1,6)]
+    [Range(1, 6)]
     public int octave = 1;
     public float octaveScale = 2;
     [Range(0.0f, 1.0f)]
@@ -64,7 +70,7 @@ public class NoiseVolume : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float jitter = 1.0f;
 
-    private int _nbParameter = 19;
+    private int _nbParameter = 20;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -82,7 +88,7 @@ public class NoiseVolume : MonoBehaviour
     {
         if (!shaderInitialized)
         {
-            for(var i=0; i<50; i++)
+            for (var i = 0; i < 50; i++)
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
             }
@@ -131,7 +137,7 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeTransforms.RemoveAt(_noiseIndexInShader);
         noiseVolumeTransforms.Add(new Matrix4x4());
 
-        for(var i=_noiseIndexInShader; i<noiseVolumes.Count; i++)
+        for (var i = _noiseIndexInShader; i < noiseVolumes.Count; i++)
         {
             noiseVolumes[i]._noiseIndexInShader--;
         }
@@ -144,7 +150,7 @@ public class NoiseVolume : MonoBehaviour
     {
         _shaderSpeed = speed;
 
-        if(speedSpace == Space.Self)
+        if (speedSpace == Space.Self)
         {
             _shaderSpeed = Quaternion.Euler(transform.rotation.eulerAngles) * speed;
         }
@@ -157,6 +163,7 @@ public class NoiseVolume : MonoBehaviour
         {
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = 3;
         }
+
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 1] = scale;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 2] = offset;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _shaderSpeed.x;
@@ -174,7 +181,8 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 15] = (int)volumeShape;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 16] = (int)blendOperator;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 17] = seed;
-        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 18] = (int)valueRemappingType; 
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 18] = (int)valueRemappingType;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 19] = (int)noiseSpace;
 
         _speedOffset += Time.deltaTime * _shaderSpeed;
         if (timeType == TimeType.Relative)
@@ -200,17 +208,17 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeTransforms[_noiseIndexInShader] = transform.worldToLocalMatrix;
         Shader.SetGlobalMatrixArray("noiseVolumeTransforms", noiseVolumeTransforms);
     }
-    
+
     private void Update()
     {
         UpdateNoiseTransform();
         UpdateNoiseSettings();
     }
-    
+
     private void OnDrawGizmos()
     {
         var color = new Color(1.0f, 0.5f, 0.0f);//Yellow
-        if(volumeType == VolumeType.Mask)
+        if (volumeType == VolumeType.Mask)
         {
             color = new Color(0.0f, 0.5f, 1.0f);//Blue
         }
@@ -221,7 +229,7 @@ public class NoiseVolume : MonoBehaviour
         Gizmos.color = color;
         Gizmos.matrix = transform.localToWorldMatrix;
 
-        switch(volumeShape)
+        switch (volumeShape)
         {
             case VolumeShape.Box:
                 Gizmos.DrawWireCube(Vector3.zero, Vector3.one);

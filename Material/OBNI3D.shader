@@ -110,15 +110,15 @@ Shader "OBNI/OBNI3D"
 			float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
 			o.worldPos = worldPos;
 
-			float disp = GetNoiseOnPosition(worldPos);
+			float disp = GetNoiseOnPosition(v.vertex);
 			
 			v.vertex.xyz += (v.normal * _NormalInfluence + _DeformationAxis) * disp;
 
 			//Recompute normals
 			float3 bitangent = cross(v.normal, v.tangent);
 
-			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(worldPos + v.tangent * _NormalDelta);
-			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis)  * GetNoiseOnPosition(worldPos + bitangent * _NormalDelta);
+			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(v.vertex.xyz + v.tangent * _NormalDelta, 1));
+			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis)  * GetNoiseOnPosition(float4(v.vertex.xyz + bitangent * _NormalDelta, 1));
 
 			float3 newTangent = (positionAndTangent - v.vertex); // leaves just 'tangent'
 			float3 newBitangent = (positionAndBitangent - v.vertex); // leaves just 'bitangent'
