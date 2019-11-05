@@ -19,7 +19,8 @@ Shader "OBNI/OBNI3D"
 		[Space]
 		[Header(Emission)]
 		_NoiseEmission("Noise Emission", Float) = 0
-		_Emission("Emission", Float) = 1
+		_EmissionTex("EmissionTex", 2D) = "white" {}
+		[HDR] _EmissionColor("EmissionColor", color) = (0,0,0,0)
 		[Space]
 		[Header(Material)]
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
@@ -35,7 +36,7 @@ Shader "OBNI/OBNI3D"
 		//_Tess("Tessellation", Range(1,32)) = 4
 		[Space]
 		[Header(Rim Lighting)]
-		_RimColor("Rim Color", Color) = (0,1,0,1)
+		[HDR] _RimColor("Rim Color", Color) = (0,1,0,1)
 		_RimPower("Rim Power", Float) = .5
 		_RimIntensity("Rim Intensity", Float) = 1
     }
@@ -51,13 +52,6 @@ Shader "OBNI/OBNI3D"
 		#include "NoiseBlender.hlsl"
 
 		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add//tessellate:tessFixed 
-
-		/*NoiseSettings:
-		type      scale         offset      speed.x
-		speed.y   speed.z       octave      octavescale
-		octaveAt  useCPUClock   clock       jitter
-		intensity volumeTransformAffectsNoise fallOff   shape
-		*/
 
 		struct appdata {
 			float4 vertex : POSITION;
@@ -82,11 +76,15 @@ Shader "OBNI/OBNI3D"
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
 		float _GradientFeathering;
 		float _NoiseEmission;
-		float _Emission;
+		float4 _EmissionColor;
+		sampler2D _EmissionTex;
+		sampler2D _EmissionTex_ST;
 		float _Glossiness;
 		float _Metallic;
 		sampler2D _MainTex;
+		
 		sampler2D _GradientTex;
+		sampler2D _GradientTex_ST;
 
 		float4 _RimColor;
 		float _RimPower;
@@ -142,8 +140,10 @@ Shader "OBNI/OBNI3D"
 			float time = noiseVolumeSettings[9] == 1.0f ? noiseVolumeSettings[10] : _Time.y;
 			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
-			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
+			float4 gradCol = tex2D(_GradientTex_ST, colorReader) * _GradientColor;
 			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+			float4 e = tex2D(_EmissionTex_ST, IN.uv_MainTex) * _EmissionColor;
+
 
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
 			//float blendCoeff = smoothstep((_ColorChangeThreshold - _GradientFeathering) * referenceAmplitude, (_ColorChangeThreshold + _GradientFeathering) * referenceAmplitude, disp);
@@ -152,8 +152,9 @@ Shader "OBNI/OBNI3D"
 			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
+
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
-			o.Emission = c.rgb * _Emission + _NoiseEmission * disp;
+			o.Emission = _NoiseEmission * disp * gradCol.rgb + e.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
