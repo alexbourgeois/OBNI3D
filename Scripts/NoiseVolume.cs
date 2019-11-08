@@ -25,7 +25,7 @@ public enum NoiseType
 
 public enum NoiseValueRemapType
 {
-    PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3
+    PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3, AbsoluteNegative = 4
 }
 
 public enum BlendOperator
@@ -35,7 +35,7 @@ public enum BlendOperator
 
 public enum TimeType { Absolute = 0, Relative = 1 }
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Time Settings")]
@@ -70,7 +70,10 @@ public class NoiseVolume : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float jitter = 1.0f;
 
-    private int _nbParameter = 20;
+	[Header("Gizmos")]
+	public bool drawGizmos = true;
+
+	private int _nbParameter = 20;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -92,7 +95,7 @@ public class NoiseVolume : MonoBehaviour
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
             }
-            for (var i = 0; i < _nbParameter * 10; i++)
+            for (var i = 0; i < _nbParameter * 50; i++)
             {
                 noiseVolumeSettings.Add(0.0f);
             }
@@ -217,6 +220,9 @@ public class NoiseVolume : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+		if (!drawGizmos)
+			return;
+
         var color = new Color(1.0f, 0.5f, 0.0f);//Yellow
         if (volumeType == VolumeType.Mask)
         {
