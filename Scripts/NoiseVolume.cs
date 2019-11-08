@@ -10,7 +10,7 @@ public enum VolumeType
 
 public enum VolumeShape
 {
-    Sphere = 1, Box = 2
+    Sphere = 1, Box = 2, Cone = 3
 }
 
 public enum NoiseSpace
@@ -38,10 +38,6 @@ public enum TimeType { Absolute = 0, Relative = 1 }
 //[ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
 {
-    [Header("Time Settings")]
-    public bool SyncWithCPU = false;
-    public TimeType timeType = TimeType.Absolute;
-
     [Header("Shape Settings")]
     public VolumeType volumeType = VolumeType.Noise;
     public VolumeShape volumeShape = VolumeShape.Box;
@@ -53,6 +49,10 @@ public class NoiseVolume : MonoBehaviour
     public float intensity = 1;
     public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
+
+    [Header("Time Settings")]
+    public bool SyncWithCPU = false;
+    public TimeType timeType = TimeType.Absolute;
 
     [Header("Noise Settings")]
     public NoiseType noiseType = NoiseType.Simplex;
@@ -243,6 +243,30 @@ public class NoiseVolume : MonoBehaviour
             case VolumeShape.Sphere:
                 Gizmos.DrawWireSphere(Vector3.zero, 1.0f);
                 break;
+            case VolumeShape.Cone:
+                DrawWireCone(Vector3.zero, 1.0f);
+                break;
         }
+    }
+
+    private Vector3 magicTransformRight = new Vector3(0.0f,0.5f, -0.5f);
+    private void DrawWireCone(Vector3 center, float length)
+    {
+        Quaternion upRayRotation = Quaternion.AngleAxis(90.0f, Vector3.forward);
+        Quaternion downRayRotation = Quaternion.AngleAxis(-90.0f, Vector3.forward);
+        Quaternion leftRayRotation = Quaternion.AngleAxis(0.0f, Vector3.forward);
+        Quaternion rightRayRotation = Quaternion.AngleAxis(180.0f, Vector3.forward);
+
+        Vector3 upRayDirection = upRayRotation * magicTransformRight * length;
+        Vector3 downRayDirection = downRayRotation * magicTransformRight * length;
+        Vector3 leftRayDirection = leftRayRotation * magicTransformRight * length;
+        Vector3 rightRayDirection = rightRayRotation * magicTransformRight * length;
+
+        Gizmos.DrawRay(center, upRayDirection);
+        Gizmos.DrawRay(center, downRayDirection);
+        Gizmos.DrawRay(center, leftRayDirection);
+        Gizmos.DrawRay(center, rightRayDirection);
+        Gizmos.DrawLine(center + downRayDirection, center + upRayDirection);
+        Gizmos.DrawLine(center + rightRayDirection, center + leftRayDirection);
     }
 }

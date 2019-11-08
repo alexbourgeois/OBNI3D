@@ -25,6 +25,13 @@ float sdSphere(float3 p, float s)
 	return length(p) - s;
 }
 
+float sdCone(float3 p, float2 c)
+{
+	// c is the sin/cos of the angle
+	float q = length(p.xy);
+	return dot(c, float2(q, p.z));
+}
+
 float4 opTx(in float4 p, in float4x4 t) // transform  = 3*4 matrix
 {
 	return mul(t, p);
@@ -36,6 +43,9 @@ float sdGlobal(float type, in float4 p, in float4x4 t) {
 	}
 	if (type == 2) { //Box
 		return sdBox(opTx(p, t).xyz, float3(0.5, 0.5, 0.5));
+	}
+	if (type == 3) { //Box
+		return max(sdCone(opTx(p, t).xyz, float2(0.707,0.707)),sdBox(opTx(p, t).xyz, float3(0.5, 0.5, 0.5)));
 	}
 
 	return 0;
