@@ -3,8 +3,8 @@
 #include "../Plugins/Unity-Noises/Includes/VoronoiNoise3D.hlsl"
 
 int noiseVolumeCount = 0;
-float4x4 noiseVolumeTransforms[10]; //Max 10 volumes
-float noiseVolumeSettings[200]; //10 * 20 parameters
+float4x4 noiseVolumeTransforms[50]; //Max 50 volumes
+float noiseVolumeSettings[1000]; //50 * 20 parameters
 
 /*NoiseSettings:
 type      scale         offset      speed.x
@@ -84,7 +84,7 @@ float GetNoiseOnPosition(float4 vertex) {
 			currentNoiseValue = noiseVolumeSettings[i + 12] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i + 1], float3(noiseVolumeSettings[i + 3], noiseVolumeSettings[i + 4], noiseVolumeSettings[i + 5]), uint(noiseVolumeSettings[i + 6]), noiseVolumeSettings[i + 7], noiseVolumeSettings[i + 8], time + noiseVolumeSettings[i + 17]);
 		}
 
-		//Clamp : PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3
+		//Clamp : PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3, AbsoluteNegative = 4
 		if (noiseVolumeSettings[i + 18] == 0) {
 			currentNoiseValue = currentNoiseValue;
 		}
@@ -96,6 +96,9 @@ float GetNoiseOnPosition(float4 vertex) {
 		}
 		if (noiseVolumeSettings[i + 18] == 3) {
 			currentNoiseValue = abs(currentNoiseValue);
+		}
+		if (noiseVolumeSettings[i + 18] == 4) {
+			currentNoiseValue = -abs(currentNoiseValue);
 		}
 
 		currentNoiseValue += noiseVolumeSettings[i + 2]; //offset
