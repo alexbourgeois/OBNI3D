@@ -17,8 +17,10 @@ Shader "OBNI/OBNI3D"
 		_GradientOffset("Gradient Offset", Float) = 0
 		_GradientFeathering("Gradient Feathering", Float) = 0
 		[Space]
-		[Header(Emission)]
-		_NoiseEmission("Noise Emission", Float) = 0
+		[Header(Emission Noise)]
+		_NoiseEmissionColor("Noise Emission Color", color) = (0,0,0,0)
+		_NoiseEmissionIntensity("Noise Emission Intensity", Float) = 0
+		[Header(Emission Texture)]
 		_EmissionTex("EmissionTex", 2D) = "white" {}
 		[HDR] _EmissionColor("EmissionColor", color) = (0,0,0,0)
 		[Space]
@@ -75,7 +77,8 @@ Shader "OBNI/OBNI3D"
 		float4 _GradientColor;
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
 		float _GradientFeathering;
-		float _NoiseEmission;
+		float4 _NoiseEmissionColor;
+		float _NoiseEmissionIntensity;
 		float4 _EmissionColor;
 		sampler2D _EmissionTex;
 		sampler2D _EmissionTex_ST;
@@ -154,7 +157,7 @@ Shader "OBNI/OBNI3D"
 
 
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
-			o.Emission = _NoiseEmission * disp * gradCol.rgb + e.rgb;
+			o.Emission = _NoiseEmissionIntensity * _NoiseEmissionColor * disp + e.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
