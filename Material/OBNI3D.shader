@@ -18,8 +18,7 @@ Shader "OBNI/OBNI3D"
 		_GradientFeathering("Gradient Feathering", Float) = 0
 		[Space]
 		[Header(Emission Noise)]
-		_NoiseEmissionColor("Noise Emission Color", color) = (0,0,0,0)
-		_NoiseEmissionIntensity("Noise Emission Intensity", Float) = 0
+		[HDR]_NoiseEmissionColor("Noise Emission Color", color) = (0,0,0,0)
 		[Header(Emission Texture)]
 		_EmissionTex("EmissionTex", 2D) = "white" {}
 		[HDR] _EmissionColor("EmissionColor", color) = (0,0,0,0)
@@ -78,7 +77,6 @@ Shader "OBNI/OBNI3D"
 		float _GradientTexRepetition, _GradientReadingSpeed, _GradientOffset;
 		float _GradientFeathering;
 		float4 _NoiseEmissionColor;
-		float _NoiseEmissionIntensity;
 		float4 _EmissionColor;
 		sampler2D _EmissionTex;
 		sampler2D _EmissionTex_ST;
@@ -143,9 +141,9 @@ Shader "OBNI/OBNI3D"
 			float time = noiseVolumeSettings[9] == 1.0f ? noiseVolumeSettings[10] : _Time.y;
 			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
-			float4 gradCol = tex2D(_GradientTex_ST, colorReader) * _GradientColor;
+			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
 			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-			float4 e = tex2D(_EmissionTex_ST, IN.uv_MainTex) * _EmissionColor;
+			float4 e = tex2D(_EmissionTex, IN.uv_MainTex) * _EmissionColor;
 
 
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
@@ -157,7 +155,7 @@ Shader "OBNI/OBNI3D"
 
 
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
-			o.Emission = _NoiseEmissionIntensity * _NoiseEmissionColor * disp + e.rgb;
+			o.Emission = _NoiseEmissionColor * disp + e.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
