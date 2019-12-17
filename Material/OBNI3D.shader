@@ -112,17 +112,19 @@ Shader "OBNI/OBNI3D"
 			o.worldPos = worldPos;
 
 			float disp = GetNoiseOnPosition(v.vertex);
-			
-			v.vertex.xyz += (v.normal * _NormalInfluence + _DeformationAxis) * disp;
 
-			//Recompute normals
+			//Recompute normals : https://www.ronja-tutorials.com/2018/06/16/Wobble-Displacement.html
 			float3 bitangent = cross(v.normal, v.tangent);
 
-			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(v.vertex.xyz + v.tangent * _NormalDelta, 1));
-			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta + (v.normal * _NormalInfluence + _DeformationAxis)  * GetNoiseOnPosition(float4(v.vertex.xyz + bitangent * _NormalDelta, 1));
+			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta;
+			float3 dispPosAndTangent = positionAndTangent + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(positionAndTangent, 1));
+			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta;
+			float3 dispPosAndBitangent = positionAndBitangent + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(positionAndBitangent, 1));
 
-			float3 newTangent = (positionAndTangent - v.vertex); // leaves just 'tangent'
-			float3 newBitangent = (positionAndBitangent - v.vertex); // leaves just 'bitangent'
+			v.vertex.xyz += (v.normal * _NormalInfluence + _DeformationAxis) * disp;
+
+			float3 newTangent = (dispPosAndTangent - v.vertex); // leaves just 'tangent'
+			float3 newBitangent = (dispPosAndBitangent - v.vertex); // leaves just 'bitangent'
 
 			float3 newNormal = normalize(cross(newTangent, newBitangent));
 
