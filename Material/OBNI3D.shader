@@ -26,10 +26,7 @@ Shader "OBNI/OBNI3D"
 		[Header(Material)]
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
-		[Space]
-		[Header(Deformation)]
-		_DeformationAxis("Deformation Axis", Vector) = (0,1,0,0)
-		_NormalInfluence("Normal Influence in Deformation", Float) = 0
+
 		[Space]
 		[Header(Normal Recomputation)]
 		_NormalDelta("Gradient Distance in Normal Recomputation", Float) = 0.01
@@ -66,9 +63,7 @@ Shader "OBNI/OBNI3D"
 			return _Tess;
 		}*/
 
-		float _NormalInfluence;
 		float _NormalDelta;
-		float3 _DeformationAxis;
 		float _Tess;
 		float _ColorChangeThreshold;
 
@@ -111,17 +106,17 @@ Shader "OBNI/OBNI3D"
 			float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
 			o.worldPos = worldPos;
 
-			float disp = GetNoiseOnPosition(v.vertex);
+			float3 disp = GetNoiseOnPosition(v.vertex, v.normal);
 
 			//Recompute normals : https://www.ronja-tutorials.com/2018/06/16/Wobble-Displacement.html
 			float3 bitangent = cross(v.normal, v.tangent);
 
 			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta;
-			float3 dispPosAndTangent = positionAndTangent + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(positionAndTangent, 1));
+			float3 dispPosAndTangent = positionAndTangent + GetNoiseOnPosition(float4(positionAndTangent, 1), v.normal);
 			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta;
-			float3 dispPosAndBitangent = positionAndBitangent + (v.normal * _NormalInfluence + _DeformationAxis) * GetNoiseOnPosition(float4(positionAndBitangent, 1));
+			float3 dispPosAndBitangent = positionAndBitangent + GetNoiseOnPosition(float4(positionAndBitangent, 1), v.normal);
 
-			v.vertex.xyz += (v.normal * _NormalInfluence + _DeformationAxis) * disp;
+			v.vertex.xyz += disp;
 
 			float3 newTangent = (dispPosAndTangent - v.vertex); // leaves just 'tangent'
 			float3 newBitangent = (dispPosAndBitangent - v.vertex); // leaves just 'bitangent'

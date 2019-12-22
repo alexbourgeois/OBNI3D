@@ -3,8 +3,8 @@
 #include "../Plugins/Unity-Noises/Includes/VoronoiNoise3D.hlsl"
 
 int noiseVolumeCount = 0;
-float4x4 noiseVolumeTransforms[50]; //Max 50 volumes
-float noiseVolumeSettings[1000]; //50 * 20 parameters
+float4x4 noiseVolumeTransforms[35]; //Max 35 volumes
+float noiseVolumeSettings[910]; //40 * 24 parameters || max size = 1023
 
 /*NoiseSettings:
 type      scale         offset      speed.x
@@ -51,13 +51,13 @@ float sdGlobal(float type, in float4 p, in float4x4 t) {
 	return 0;
 }
 
-float GetNoiseOnPosition(float4 vertex) {
-	float total = 0.0;
+float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
+	float3 total = float3(0.0f,0.0f,0.0f);
 	float time = 0.0;
 
-	for (int i = 0; i < noiseVolumeCount * 20; i += 20) {
+	for (int i = 0; i < noiseVolumeCount * 24; i += 24) {
 
-		if (noiseVolumeSettings[i] == 3) { //mask
+		if (noiseVolumeSettings[i] == -1) { //mask
 			continue;
 		}
 		//Time
@@ -70,9 +70,9 @@ float GetNoiseOnPosition(float4 vertex) {
 			pos = mul(unity_ObjectToWorld, vertex).xyz;
 		}
 		if (noiseVolumeSettings[i + 19] == 2) {//Noise space
-			pos = mul(vertex.xyz, noiseVolumeTransforms[i % 19]);
+			pos = mul(vertex.xyz, noiseVolumeTransforms[i % 23]);
 		}
-		pos = mul(pos, noiseVolumeTransforms[i % 19]) * noiseVolumeSettings[i + 13] + (1 - noiseVolumeSettings[i + 13]) * pos;
+		pos = mul(pos, noiseVolumeTransforms[i % 23]) * noiseVolumeSettings[i + 13] + (1 - noiseVolumeSettings[i + 13]) * pos;
 
 		//Noise
 		if (noiseVolumeSettings[i] == 1) {
@@ -103,38 +103,42 @@ float GetNoiseOnPosition(float4 vertex) {
 
 		currentNoiseValue += noiseVolumeSettings[i + 2]; //offset
 
-		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz , 1), noiseVolumeTransforms[i % 19]);
+		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz , 1), noiseVolumeTransforms[i % 23]);
 		volCoeff = -volCoeff;
 		volCoeff = max(volCoeff, 0);
 
 		currentNoiseValue *= clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1);
 
+		float3 axis = float3(noiseVolumeSettings[i + 21], noiseVolumeSettings[i + 22], noiseVolumeSettings[i + 23]);
+		float3 direction = axis + normal * noiseVolumeSettings[i + 20];
+
 		if (volCoeff > 0) {
 			if (noiseVolumeSettings[i + 16] == 1) {
-				total += currentNoiseValue;
+				total += currentNoiseValue * direction;
 			}
 			if (noiseVolumeSettings[i + 16] == 2) {
-				total -= currentNoiseValue;
+				total -= currentNoiseValue * direction;
 			}
 			if (noiseVolumeSettings[i + 16] == 3) {
-				total *= currentNoiseValue;
+				total *= currentNoiseValue * direction;
 			}
 			if (noiseVolumeSettings[i + 16] == 4) {
-				total /= currentNoiseValue;
+				total /= currentNoiseValue * direction;
 			}
 			if (noiseVolumeSettings[i + 16] == 5) {
-				total %= currentNoiseValue;
+				total %= currentNoiseValue * direction;
 			}
 		}
 	}
 
 	//MASK
-	for (int i = 0; i < noiseVolumeCount * 20; i += 20) {
-		if (noiseVolumeSettings[i] == 3) { //mask
-			float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[i % 19]);
+	for (int i = 0; i < noiseVolumeCount * 24; i += 24) {
+		if (noiseVolumeSettings[i] == -1) { //mask
+			float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[i % 23]);
 			volCoeff = -volCoeff;
 			volCoeff = max(volCoeff, 0);
-			total = lerp(total, 0, clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1));
+			float intensity = clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1);
+			total = lerp(total, float3(0.0f,0.0f,0.0f), intensity);
 		}
 	}
 

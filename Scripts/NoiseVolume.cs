@@ -5,7 +5,7 @@ using UnityEngine;
 
 public enum VolumeType
 {
-    Noise = 0, Mask = 1
+    Noise = 0, Mask = 1, Attraction = 2
 }
 
 public enum VolumeShape
@@ -35,7 +35,7 @@ public enum BlendOperator
 
 public enum TimeType { Absolute = 0, Relative = 1 }
 
-//[ExecuteInEditMode]
+[ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Shape Settings")]
@@ -49,6 +49,8 @@ public class NoiseVolume : MonoBehaviour
     public float intensity = 1;
     public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
+    public float normalInfluence;
+    public Vector3 axisInfluence;
 
     [Header("Time Settings")]
     public bool SyncWithCPU = false;
@@ -73,7 +75,7 @@ public class NoiseVolume : MonoBehaviour
 	[Header("Gizmos")]
 	public bool drawGizmos = true;
 
-	private int _nbParameter = 20;
+	private int _nbParameter = 24;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -91,11 +93,11 @@ public class NoiseVolume : MonoBehaviour
     {
         if (!shaderInitialized)
         {
-            for (var i = 0; i < 50; i++)
+            for (var i = 0; i < 35; i++)
             {
                 noiseVolumeTransforms.Add(new Matrix4x4());
             }
-            for (var i = 0; i < _nbParameter * 50; i++)
+            for (var i = 0; i < _nbParameter * 35; i++)
             {
                 noiseVolumeSettings.Add(0.0f);
             }
@@ -164,7 +166,7 @@ public class NoiseVolume : MonoBehaviour
         }
         if (volumeType == VolumeType.Mask)
         {
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = 3;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = -1;
         }
 
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 1] = scale;
@@ -186,6 +188,10 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 17] = seed;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 18] = (int)valueRemappingType;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 19] = (int)noiseSpace;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 20] = normalInfluence;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 21] = axisInfluence.x;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 22] = axisInfluence.y;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 23] = axisInfluence.z;
 
         _speedOffset += Time.deltaTime * _shaderSpeed;
         if (timeType == TimeType.Relative)
