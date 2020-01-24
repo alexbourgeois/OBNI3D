@@ -49,6 +49,6 @@ The demo project can be found here : https://github.com/alexbourgeois/OBNI3D-dem
 
 ## Renders
 
-You can find renders I made on my instagram : https://www.instagram.com/sioegroub/?hl=fr or on my Art Station : https://www.artstation.com/alexbourgeois
+You can find renders on my instagram : https://www.instagram.com/sioegroub/?hl=fr or on my Art Station : https://www.artstation.com/alexbourgeois
 
 ![Imgur](https://i.imgur.com/0pCis9L.gif)
