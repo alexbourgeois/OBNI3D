@@ -9,12 +9,12 @@ All vertices of an object using the ONBI3D shader that are inside a Volume will 
 <img src="https://github.com/alexbourgeois/images/blob/master/OBNI/NoiseVolume-demo.gif">
 </p>
 
-## Deformers
+### Deformers
  Three deformers are available : Value, Simplex and Voronoi.
 
 Volumes blend themselves when they affect the same vertex according to their own blend operator : addition, soustraction, multiplication, division and modulo.
 
-## Mask
+### Mask
 
 A mask is a volume that cancel any deformer in its area of effect allowing you to prevent any displacement.
 
@@ -37,6 +37,10 @@ Download the [Unity-Noises](url=https://github.com/Theoriz/Unity-Noises) reposit
 2. Add the material to an object in your scene.
 3. Create a new gameobject in your scene and add the NoiseVolume.cs script to it.
 4. Play!
+
+## Note
+
+The first deformer has to use an "Addition" as blend operator. The other volumes will use this first value as a blend coefficient.
 
 ## Demo
 
