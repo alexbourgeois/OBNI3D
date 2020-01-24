@@ -83,6 +83,9 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 			//output += SimplexNoise_Octaves(float3(uv, 0), _Scale, float3(0.0f, 0.0f, _Speed), uint(_Octave), _OctaveScale, _Attenuation, time);
 			currentNoiseValue = noiseVolumeSettings[i + 12] * SimplexNoise_Octaves(pos, noiseVolumeSettings[i + 1], float3(noiseVolumeSettings[i + 3], noiseVolumeSettings[i + 4], noiseVolumeSettings[i + 5]), uint(noiseVolumeSettings[i + 6]), noiseVolumeSettings[i + 7], noiseVolumeSettings[i + 8], time + noiseVolumeSettings[i + 17]);
 		}
+		if (noiseVolumeSettings[i] == 3) {
+			currentNoiseValue = noiseVolumeSettings[i + 12];
+		}
 
 		//Clamp : PositiveAndNegative = 0, PositiveOnly = 1, NegativeOnly = 2, Absolute = 3, AbsoluteNegative = 4
 		if (noiseVolumeSettings[i + 18] == 0) {

@@ -5,7 +5,7 @@ using UnityEngine;
 
 public enum VolumeType
 {
-    Noise = 0, Mask = 1, Attraction = 2
+    Deformer = 0, Mask = 1
 }
 
 public enum VolumeShape
@@ -20,7 +20,7 @@ public enum NoiseSpace
 
 public enum NoiseType
 {
-    Voronoi = 1, Simplex = 2
+    Voronoi = 1, Simplex = 2, Value = 3
 }
 
 public enum NoiseValueRemapType
@@ -30,17 +30,17 @@ public enum NoiseValueRemapType
 
 public enum BlendOperator
 {
-    Addition = 1, Substraction = 2, Multiplication = 3, Division = 4, Modulo = 5
+    Addition = 1, Substraction = 2, Multiplication = 3, Division = 4
 }
 
 public enum TimeType { Absolute = 0, Relative = 1 }
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class NoiseVolume : MonoBehaviour
 {
     [Header("Shape Settings")]
-    public VolumeType volumeType = VolumeType.Noise;
     public VolumeShape volumeShape = VolumeShape.Box;
+    public VolumeType volumeType = VolumeType.Deformer;
     [Range(0.0f, 10.0f)]
     public float falloffRadius = 0.1f;
     public bool volumeTransformAffectsNoise;
@@ -49,15 +49,15 @@ public class NoiseVolume : MonoBehaviour
     public float intensity = 1;
     public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
-    public float normalInfluence;
+    public float normalInfluence = 1.0f;
     public Vector3 axisInfluence;
 
     [Header("Time Settings")]
     public bool SyncWithCPU = false;
     public TimeType timeType = TimeType.Absolute;
 
-    [Header("Noise Settings")]
-    public NoiseType noiseType = NoiseType.Simplex;
+    [Header("Deformer Settings")]
+    public NoiseType deformerType = NoiseType.Simplex;
     public NoiseSpace noiseSpace = NoiseSpace.World;
     public int seed;
     public float offset = 0;
@@ -160,9 +160,9 @@ public class NoiseVolume : MonoBehaviour
             _shaderSpeed = Quaternion.Euler(transform.rotation.eulerAngles) * speed;
         }
 
-        if (volumeType == VolumeType.Noise)
+        if (volumeType == VolumeType.Deformer)
         {
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (int)noiseType;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = (int)deformerType;
         }
         if (volumeType == VolumeType.Mask)
         {
