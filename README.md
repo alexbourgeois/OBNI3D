@@ -4,6 +4,7 @@
 
 This tool allows you to simply deform an object using Volumes. Those volumes are gameobjects with a NoiseVolume component.
 All vertices of an object using the ONBI3D shader that are inside a Volume will be affected deformed.
+A vertex normal recomputation is done in the shader to allow good reflections on deformed object.
 
 <p align="center">
 <img src="https://github.com/alexbourgeois/images/blob/master/OBNI/NoiseVolume-demo.gif">
@@ -49,3 +50,5 @@ The demo project can be found here : https://github.com/alexbourgeois/OBNI3D-dem
 ## Renders
 
 You can find renders I made on my instagram : https://www.instagram.com/sioegroub/?hl=fr or on my Art Station : https://www.artstation.com/alexbourgeois
+
+![Imgur](https://i.imgur.com/0pCis9L.gif)
