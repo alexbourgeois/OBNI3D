@@ -30,7 +30,7 @@ Clone this repository and do submodule init and update in order to get the Unity
 ### Non-git users
 Download this repository and add it to your Unity project.
 
-Download the [Unity-Noises](url=https://github.com/Theoriz/Unity-Noises) repository and add it inside the OBNI3D/Plugins directory.
+Download the [Unity-Noises](https://github.com/Theoriz/Unity-Noises) repository and add it inside the OBNI3D/Plugins directory.
 
 ## Quick Start
 
