@@ -2,22 +2,21 @@
 
 ## Presentation
 
-This tool allows you to simply deform an object using noise volumes. Those volumes are gameobjects with a NoiseVolume component.
-All vertices of an object with the ONBI3D shader that are inside a NoiseVolume will be affected by noise or mask.
+This tool allows you to simply deform an object using Volumes. Those volumes are gameobjects with a NoiseVolume component.
+All vertices of an object using the ONBI3D shader that are inside a Volume will be affected deformed.
 
 <p align="center">
-<img src="https://github.com/alexbourgeois/images/blob/master/OBNI/obni3d-fig01.png">
+<img src="https://github.com/alexbourgeois/images/blob/master/OBNI/NoiseVolume-demo.gif">
 </p>
 
-
-## Noises
- Two noises are available : Simplex and Voronoi.
+## Deformers
+ Three deformers are available : Value, Simplex and Voronoi.
 
 Volumes blend themselves when they affect the same vertex according to their own blend operator : addition, soustraction, multiplication, division and modulo.
 
 ## Mask
 
-A mask is a volume that cancel any noise in its area of effect allowing you to prevent any displacement in its area.
+A mask is a volume that cancel any deformer in its area of effect allowing you to prevent any displacement.
 
 ## Installation
 
@@ -37,14 +36,11 @@ Download the [Unity-Noises](url=https://github.com/Theoriz/Unity-Noises) reposit
 1. Create a new material and assign the OBNI3D shader to it.
 2. Add the material to an object in your scene.
 3. Create a new gameobject in your scene and add the NoiseVolume.cs script to it.
-4. Play !
-
-
+4. Play!
 
 ## Demo
 
 The demo project can be found here : https://github.com/alexbourgeois/OBNI3D-demo 
-
 
 ## Renders
 
