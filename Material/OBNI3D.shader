@@ -7,6 +7,8 @@ Shader "OBNI/OBNI3D"
 		[Header(Main Texture)]
 		_MainTex("Main Texture", 2D) = "white" {}
 		[HDR] _Color("Color", color) = (1,1,1,0)
+		_NormalMap("Normal Map", 2D) = "bump" {}
+		_NormalStrength("Normal strength", Float) = 1
 		[Space]
 		[Header(Gradient Texture)]
 		_ColorChangeThreshold("Color Change Threshold", Float) = 0
@@ -26,10 +28,6 @@ Shader "OBNI/OBNI3D"
 		[Header(Material)]
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
-
-		[Space]
-		[Header(Normal Recomputation)]
-		_NormalDelta("Gradient Distance in Normal Recomputation", Float) = 0.01
 		
 		//_Tess("Tessellation", Range(1,32)) = 4
 		[Space]
@@ -37,6 +35,7 @@ Shader "OBNI/OBNI3D"
 		[HDR] _RimColor("Rim Color", Color) = (0,1,0,1)
 		_RimPower("Rim Power", Float) = .5
 		_RimIntensity("Rim Intensity", Float) = 1
+		_RimEmission("Rim emission", Float) = 0
     }
     SubShader
     {
@@ -63,9 +62,14 @@ Shader "OBNI/OBNI3D"
 			return _Tess;
 		}*/
 
-		float _NormalDelta;
 		float _Tess;
 		float _ColorChangeThreshold;
+
+		sampler2D _MainTex;
+
+		sampler2D _NormalMap;
+		float4 _NormalMap_ST;
+		float _NormalStrength;
 
 		float4 _Color;
 		float4 _GradientColor;
@@ -74,20 +78,17 @@ Shader "OBNI/OBNI3D"
 		float4 _NoiseEmissionColor;
 		float4 _EmissionColor;
 		sampler2D _EmissionTex;
-		sampler2D _EmissionTex_ST;
+		float4 _EmissionTex_ST;
 		float _Glossiness;
 		float _Metallic;
-		sampler2D _MainTex;
 		
 		sampler2D _GradientTex;
-		sampler2D _GradientTex_ST;
+		float4 _GradientTex_ST;
 
 		float4 _RimColor;
 		float _RimPower;
 		float _RimIntensity;
-
-
-		float referenceAmplitude = 1;
+		float _RimEmission;
 
 		struct Input
 		{
@@ -111,9 +112,9 @@ Shader "OBNI/OBNI3D"
 			//Recompute normals : https://www.ronja-tutorials.com/2018/06/16/Wobble-Displacement.html
 			float3 bitangent = cross(v.normal, v.tangent);
 
-			float3 positionAndTangent = v.vertex + v.tangent * _NormalDelta;
+			float3 positionAndTangent = v.vertex + v.tangent * 0.01;
 			float3 dispPosAndTangent = positionAndTangent + GetNoiseOnPosition(float4(positionAndTangent, 1), v.normal);
-			float3 positionAndBitangent = v.vertex + bitangent * _NormalDelta;
+			float3 positionAndBitangent = v.vertex + bitangent * 0.01;
 			float3 dispPosAndBitangent = positionAndBitangent + GetNoiseOnPosition(float4(positionAndBitangent, 1), v.normal);
 
 			v.vertex.xyz += disp;
@@ -127,6 +128,7 @@ Shader "OBNI/OBNI3D"
 			
 			o.normal = v.normal;
 			o.noiseValue = disp;
+			o.uv_MainTex = v.texcoord.xy;
 		}
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
@@ -146,13 +148,14 @@ Shader "OBNI/OBNI3D"
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
 			//float blendCoeff = smoothstep((_ColorChangeThreshold - _GradientFeathering) * referenceAmplitude, (_ColorChangeThreshold + _GradientFeathering) * referenceAmplitude, disp);
 			float4 c = lerp(texCol, gradCol, blendCoeff);
+			float2 uv = TRANSFORM_TEX(IN.uv_MainTex, _NormalMap);
+			o.Normal = UnpackScaleNormal(tex2D(_NormalMap, uv), _NormalStrength);
 
 			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
-
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
-			o.Emission = _NoiseEmissionColor * disp + e.rgb;
+			o.Emission = _NoiseEmissionColor * disp + e.rgb + (_RimEmission * _RimColor * rimWeight);
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
