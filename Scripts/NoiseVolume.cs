@@ -43,12 +43,13 @@ public class NoiseVolume : MonoBehaviour
     public VolumeType volumeType = VolumeType.Deformer;
     [Range(0.0f, 10.0f)]
     public float falloffRadius = 0.1f;
-    public bool volumeTransformAffectsNoise;
+    public bool clampDeformationToVolume;
 
     [Header("Blend Settings")]
     public float intensity = 1;
     public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
+    [Range(0.0f, 1.0f)]
     public float normalInfluence = 1.0f;
     public Vector3 axisInfluence;
 
@@ -168,6 +169,9 @@ public class NoiseVolume : MonoBehaviour
         {
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 0] = -1;
         }
+        
+        if(axisInfluence.magnitude > 1.0f)
+            axisInfluence.Normalize();
 
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 1] = scale;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 2] = offset;
@@ -181,7 +185,7 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = Time.time;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 11] = jitter;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 12] = intensity;
-        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 13] = volumeTransformAffectsNoise ? 1.0f : 0.0f;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 13] = clampDeformationToVolume ? 1.0f : 0.0f;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 14] = falloffRadius;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 15] = (int)volumeShape;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 16] = (int)blendOperator;

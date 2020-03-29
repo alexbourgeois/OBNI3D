@@ -72,7 +72,6 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 		if (noiseVolumeSettings[i + 19] == 2) {//Noise space
 			pos = mul(vertex.xyz, noiseVolumeTransforms[i % 23]);
 		}
-		pos = mul(pos, noiseVolumeTransforms[i % 23]) * noiseVolumeSettings[i + 13] + (1 - noiseVolumeSettings[i + 13]) * pos;
 
 		//Noise
 		if (noiseVolumeSettings[i] == 1) {
@@ -106,14 +105,36 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 
 		currentNoiseValue += noiseVolumeSettings[i + 2]; //offset
 
-		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz , 1), noiseVolumeTransforms[i % 23]);
+		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[i % 23]); //inside negative, outside positive
+
+		float3 axis = float3(noiseVolumeSettings[i + 21], noiseVolumeSettings[i + 22], noiseVolumeSettings[i + 23]);
+		float3 direction = axis + normal * noiseVolumeSettings[i + 20];
+
+		if (noiseVolumeSettings[i + 13] == 1) { //clamp to volume
+			
+			/*
+			A  : 0 -> volCoeff
+			B : currentNoiseValue -> displacedVertexDistanceToVolume
+
+			m = (yb - ya) / (xb - xa)
+			y = mx + p
+			x = (y - p) / m
+			p = y - mx 
+
+			*/
+			float displacedVertexDistanceToVolume = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz + currentNoiseValue * direction, 1), noiseVolumeTransforms[i % 23]);
+			if (displacedVertexDistanceToVolume > 0.0f) {
+				float m = (displacedVertexDistanceToVolume - volCoeff) / (currentNoiseValue - 0);
+				float p = volCoeff;
+
+				currentNoiseValue = (0 - p) / m;
+			}
+		}
+
 		volCoeff = -volCoeff;
 		volCoeff = max(volCoeff, 0);
 
 		currentNoiseValue *= clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1);
-
-		float3 axis = float3(noiseVolumeSettings[i + 21], noiseVolumeSettings[i + 22], noiseVolumeSettings[i + 23]);
-		float3 direction = axis + normal * noiseVolumeSettings[i + 20];
 
 		if (volCoeff > 0) {
 			if (noiseVolumeSettings[i + 16] == 1) {

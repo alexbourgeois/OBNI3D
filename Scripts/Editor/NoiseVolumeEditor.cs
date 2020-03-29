@@ -11,7 +11,7 @@ public class NoiseVolumeEditor : Editor
     SerializedProperty volumeType;
     SerializedProperty volumeShape;
     SerializedProperty volumeFallOff;
-    SerializedProperty volumeTransformAffectsNoise;
+    SerializedProperty clampDeformationToVolume;
 
 
     SerializedProperty intensity;
@@ -37,7 +37,7 @@ public class NoiseVolumeEditor : Editor
         volumeType = serializedObject.FindProperty("volumeType");//ok
         volumeShape = serializedObject.FindProperty("volumeShape");//ok
         volumeFallOff = serializedObject.FindProperty("falloffRadius");//ok
-        volumeTransformAffectsNoise = serializedObject.FindProperty("volumeTransformAffectsNoise");//ok
+        clampDeformationToVolume = serializedObject.FindProperty("clampDeformationToVolume");//ok
         valueRemappingType = serializedObject.FindProperty("valueRemappingType");//ok
         intensity = serializedObject.FindProperty("intensity");//ok
         valueRemappingType = serializedObject.FindProperty("valueRemappingType");
@@ -73,7 +73,7 @@ public class NoiseVolumeEditor : Editor
             EditorGUILayout.PropertyField(normalInfluence);
             EditorGUILayout.PropertyField(axisInfluence);
             EditorGUILayout.PropertyField(valueRemappingType);
-            EditorGUILayout.PropertyField(volumeTransformAffectsNoise);
+            EditorGUILayout.PropertyField(clampDeformationToVolume);
             EditorGUILayout.PropertyField(deformerType);
             if (deformerType.hasMultipleDifferentValues || deformerType.intValue != 3)
             {
