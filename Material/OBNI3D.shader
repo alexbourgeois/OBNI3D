@@ -127,7 +127,7 @@ Shader "OBNI/OBNI3D"
 			v.normal = newNormal;
 			
 			o.normal = v.normal;
-			o.noiseValue = disp;
+			o.noiseValue = length(disp);
 			o.uv_MainTex = v.texcoord.xy;
 		}
 
