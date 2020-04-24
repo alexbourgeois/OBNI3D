@@ -48,7 +48,7 @@ Shader "OBNI/OBNI3D"
 		
 		#include "NoiseBlender.hlsl"
 
-		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add//tessellate:tessFixed 
+		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add// tessellate:tessFixed 
 
 		struct appdata {
 			float4 vertex : POSITION;
@@ -57,12 +57,12 @@ Shader "OBNI/OBNI3D"
 			float2 texcoord : TEXCOORD0;
 		};
 
-		/*float4 tessFixed() //Can't use tesselation with out Input in vertex function
+		/*float _Tess;
+		float4 tessFixed() //Can't use tesselation with out Input in vertex function
 		{
 			return _Tess;
 		}*/
 
-		float _Tess;
 		float _ColorChangeThreshold;
 
 		sampler2D _MainTex;

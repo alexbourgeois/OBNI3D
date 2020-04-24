@@ -122,10 +122,11 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 			p = y - mx 
 
 			*/
-			float displacedVertexDistanceToVolume = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz + currentNoiseValue * direction, 1), noiseVolumeTransforms[i % 23]);
+			float displacedVertexDistanceToVolume = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex + currentNoiseValue * direction).xyz, 1), noiseVolumeTransforms[i % 23]);
 			if (displacedVertexDistanceToVolume > 0.0f) {
 				float m = (displacedVertexDistanceToVolume - volCoeff) / (currentNoiseValue - 0);
-				float p = volCoeff;
+				//float p = volCoeff;
+				float p = displacedVertexDistanceToVolume - m * currentNoiseValue;
 
 				currentNoiseValue = (0 - p) / m;
 			}
@@ -137,6 +138,10 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 		currentNoiseValue *= clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1);
 
 		if (volCoeff > 0) {
+			if(noiseVolumeSettings[i + 16] == 0) {
+				total = currentNoiseValue * direction;
+				break;
+			}
 			if (noiseVolumeSettings[i + 16] == 1) {
 				total += currentNoiseValue * direction;
 			}

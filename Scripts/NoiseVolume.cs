@@ -30,7 +30,7 @@ public enum NoiseValueRemapType
 
 public enum BlendOperator
 {
-    Addition = 1, Substraction = 2, Multiplication = 3, Division = 4
+    Solo = 0, Addition = 1, Substraction = 2, Multiplication = 3, Division = 4
 }
 
 public enum TimeType { Absolute = 0, Relative = 1 }
