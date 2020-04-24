@@ -60,6 +60,8 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 		if (noiseVolumeSettings[i] == -1) { //mask
 			continue;
 		}
+		float4x4 currentVolumeTransform = noiseVolumeTransforms[(uint)(i / 23)];
+
 		//Time
 		time = (noiseVolumeSettings[i + 9] == 1.0f) ? noiseVolumeSettings[i + 10] : _Time.y;
 		float currentNoiseValue = 0.0f;
@@ -70,7 +72,7 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 			pos = mul(unity_ObjectToWorld, vertex).xyz;
 		}
 		if (noiseVolumeSettings[i + 19] == 2) {//Noise space
-			pos = mul(vertex.xyz, noiseVolumeTransforms[i % 23]);
+			pos = mul(vertex.xyz, currentVolumeTransform);
 		}
 
 		//Noise
@@ -105,7 +107,7 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 
 		currentNoiseValue += noiseVolumeSettings[i + 2]; //offset
 
-		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[i % 23]); //inside negative, outside positive
+		float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), currentVolumeTransform); //inside negative, outside positive
 
 		float3 axis = float3(noiseVolumeSettings[i + 21], noiseVolumeSettings[i + 22], noiseVolumeSettings[i + 23]);
 		float3 direction = axis + normal * noiseVolumeSettings[i + 20];
@@ -122,7 +124,7 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 			p = y - mx 
 
 			*/
-			float displacedVertexDistanceToVolume = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex + currentNoiseValue * direction).xyz, 1), noiseVolumeTransforms[i % 23]);
+			float displacedVertexDistanceToVolume = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex + currentNoiseValue * direction).xyz, 1), currentVolumeTransform);
 			if (displacedVertexDistanceToVolume > 0.0f) {
 				float m = (displacedVertexDistanceToVolume - volCoeff) / (currentNoiseValue - 0);
 				//float p = volCoeff;
@@ -161,12 +163,12 @@ float3 GetNoiseOnPosition(float4 vertex, float3 normal) {
 	}
 
 	//MASK
-	for (int i = 0; i < noiseVolumeCount * 24; i += 24) {
-		if (noiseVolumeSettings[i] == -1) { //mask
-			float volCoeff = sdGlobal(noiseVolumeSettings[i + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[i % 23]);
+	for (int j = 0; j < noiseVolumeCount * 24; j += 24) {
+		if (noiseVolumeSettings[j] == -1) { //mask
+			float volCoeff = sdGlobal(noiseVolumeSettings[j + 15], float4(mul(unity_ObjectToWorld, vertex).xyz, 1), noiseVolumeTransforms[(uint)(j / 23)]);
 			volCoeff = -volCoeff;
 			volCoeff = max(volCoeff, 0);
-			float intensity = clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[i + 14] + 0.00001)), 0, 1);
+			float intensity = clamp(lerp(0, 1, volCoeff / (noiseVolumeSettings[j + 14] + 0.00001)), 0, 1);
 			total = lerp(total, float3(0.0f,0.0f,0.0f), intensity);
 		}
 	}

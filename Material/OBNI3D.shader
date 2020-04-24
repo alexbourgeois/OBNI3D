@@ -29,7 +29,7 @@ Shader "OBNI/OBNI3D"
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
 		
-		//_Tess("Tessellation", Range(1,32)) = 4
+		_Tess("Tessellation", Range(1,32)) = 4
 		[Space]
 		[Header(Rim Lighting)]
 		[HDR] _RimColor("Rim Color", Color) = (0,1,0,1)
@@ -45,10 +45,11 @@ Shader "OBNI/OBNI3D"
         CGPROGRAM
 // Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 #pragma exclude_renderers gles
-		
+
+		#include "UnityCG.cginc"
 		#include "NoiseBlender.hlsl"
 
-		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert //alpha:add// tessellate:tessFixed 
+		#pragma surface surf Standard addshadow fullforwardshadows vertex:vert tessellate:tessFixed //alpha:add//
 
 		struct appdata {
 			float4 vertex : POSITION;
@@ -57,11 +58,11 @@ Shader "OBNI/OBNI3D"
 			float2 texcoord : TEXCOORD0;
 		};
 
-		/*float _Tess;
+		float _Tess;
 		float4 tessFixed() //Can't use tesselation with out Input in vertex function
 		{
 			return _Tess;
-		}*/
+		}
 
 		float _ColorChangeThreshold;
 
@@ -92,20 +93,18 @@ Shader "OBNI/OBNI3D"
 
 		struct Input
 		{
+			float4 color : COLOR;
 			float2 uv_MainTex;
-			float3 worldPos;
-			float3 normal;
-			float3 viewDir;
-			float noiseValue;
+			float3 viewDir : TEXCOORD0;
 		};
 
 
-		void vert(inout appdata_full v, out Input o)
+		void vert(inout appdata_full v)
 		{
-			UNITY_INITIALIZE_OUTPUT(Input, o);
+			//UNITY_INITIALIZE_OUTPUT(Input, o);
 
 			float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-			o.worldPos = worldPos;
+			//o.worldPos = worldPos;
 
 			float3 disp = GetNoiseOnPosition(v.vertex, v.normal);
 
@@ -125,33 +124,32 @@ Shader "OBNI/OBNI3D"
 			float3 newNormal = normalize(cross(newTangent, newBitangent));
 
 			v.normal = newNormal;
-			
-			o.normal = v.normal;
-			o.noiseValue = length(disp);
-			o.uv_MainTex = v.texcoord.xy;
+			v.color = float4(length(disp), 666,666,666); //Only vector where vert can write (tesselation limitation)
 		}
 
 		void surf(Input IN, inout SurfaceOutputStandard o) {
 
-			float disp = IN.noiseValue;
+			float2 uv_MainTex = IN.uv_MainTex;
+			float disp = IN.color.x;
 
 			float y = disp * _GradientTexRepetition;
 
 			float time = noiseVolumeSettings[9] == 1.0f ? noiseVolumeSettings[10] : _Time.y;
-			float2 colorReader = (1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
+			float2 colorReader = float2(1.0f, _GradientOffset + y + time *_GradientReadingSpeed);
 
 			float4 gradCol = tex2D(_GradientTex, colorReader) * _GradientColor;
-			float4 texCol = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-			float4 e = tex2D(_EmissionTex, IN.uv_MainTex) * _EmissionColor;
+			float4 texCol = tex2D(_MainTex, uv_MainTex) * _Color;
+			float4 e = tex2D(_EmissionTex, uv_MainTex) * _EmissionColor;
 
 
 			float blendCoeff = smoothstep(_ColorChangeThreshold - _GradientFeathering, _ColorChangeThreshold + _GradientFeathering, disp);
 			//float blendCoeff = smoothstep((_ColorChangeThreshold - _GradientFeathering) * referenceAmplitude, (_ColorChangeThreshold + _GradientFeathering) * referenceAmplitude, disp);
 			float4 c = lerp(texCol, gradCol, blendCoeff);
-			float2 uv = TRANSFORM_TEX(IN.uv_MainTex, _NormalMap);
+			float2 uv = TRANSFORM_TEX(uv_MainTex, _NormalMap);
 			o.Normal = UnpackScaleNormal(tex2D(_NormalMap, uv), _NormalStrength);
 
-			float rim = 1.0 - saturate(dot(normalize(IN.viewDir), o.Normal));
+			float3 viewDir = IN.viewDir; //IN.color.xyz
+			float rim = 1.0 - saturate(dot(normalize(viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
