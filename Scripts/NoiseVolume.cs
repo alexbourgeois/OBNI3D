@@ -30,7 +30,7 @@ public enum NoiseValueRemapType
 
 public enum BlendOperator
 {
-    Solo = 0, Addition = 1, Substraction = 2, Multiplication = 3, Division = 4
+    Solo = 0, Addition = 1, Substraction = 2, Multiplication = 3, Division = 4, Magic = 5
 }
 
 public enum TimeType { Absolute = 0, Relative = 1 }
@@ -47,17 +47,18 @@ public class NoiseVolume : MonoBehaviour
 
     [Header("Blend Settings")]
     public float intensity = 1;
-    public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
     public BlendOperator blendOperator = BlendOperator.Addition;
     [Range(0.0f, 1.0f)]
     public float normalInfluence = 1.0f;
     public Vector3 axisInfluence;
 
     [Header("Time Settings")]
-    public bool SyncWithCPU = false;
     public TimeType timeType = TimeType.Absolute;
+    public bool SyncWithCPU = true;
 
     [Header("Deformer Settings")]
+    public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
+    public Vector4 valueRemappingFromTo = new Vector4(-1, 1, -1, 1);
     public NoiseType deformerType = NoiseType.Simplex;
     public NoiseSpace noiseSpace = NoiseSpace.World;
     public int seed;
@@ -76,7 +77,7 @@ public class NoiseVolume : MonoBehaviour
 	[Header("Gizmos")]
 	public bool drawGizmos = true;
 
-	private int _nbParameter = 24;
+	private int _nbParameter = 28;
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
@@ -196,6 +197,10 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 21] = axisInfluence.x;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 22] = axisInfluence.y;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 23] = axisInfluence.z;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 24] = valueRemappingFromTo.x;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 25] = valueRemappingFromTo.y;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 26] = valueRemappingFromTo.z;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 27] = valueRemappingFromTo.w;
 
         _speedOffset += Time.deltaTime * _shaderSpeed;
         if (timeType == TimeType.Relative)

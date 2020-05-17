@@ -26,9 +26,13 @@ Shader "OBNI/OBNI3D"
 		[HDR] _EmissionColor("EmissionColor", color) = (0,0,0,0)
 		[Space]
 		[Header(Material)]
-		_Glossiness("Smoothness", Range(0,1)) = 0.5
-		_Metallic("Metallic", Range(0,1)) = 0.0
-		
+		[Toggle] _DisplacementSmoothness("Displacement affects smoothness", Float) = 0
+		_DisplacementAffectsSmoothness("Smoothness over displacement", Vector) = (0,0,1,0)
+		[Toggle] _DisplacementMetallic("Displacement affects metallic", Float) = 0
+		_DisplacementAffectsMetallic("Metallic over displacement", Vector) = (0,0,1,0)
+		_Glossiness("Default Smoothness", Range(0,1)) = 0.5
+		_Metallic("Default Metallic", Range(0,1)) = 0.0
+
 		_Tess("Tessellation", Range(1,32)) = 4
 		[Space]
 		[Header(Rim Lighting)]
@@ -80,6 +84,11 @@ Shader "OBNI/OBNI3D"
 		float4 _EmissionColor;
 		sampler2D _EmissionTex;
 		float4 _EmissionTex_ST;
+
+		float _DisplacementSmoothness;
+		fixed4 _DisplacementAffectsSmoothness;
+		float _DisplacementMetallic;
+		fixed4 _DisplacementAffectsMetallic;
 		float _Glossiness;
 		float _Metallic;
 		
@@ -152,10 +161,20 @@ Shader "OBNI/OBNI3D"
 			float rim = 1.0 - saturate(dot(normalize(viewDir), o.Normal));
 			float rimWeight = pow(rim, _RimPower) * _RimIntensity;
 
+			float smoothness = _Glossiness;
+			if (_DisplacementSmoothness == 1) {
+				smoothness = remapFromTo(disp, _DisplacementAffectsSmoothness.x, _DisplacementAffectsSmoothness.z, _DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w);
+				smoothness = smoothstep(_DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w, smoothness);
+			}
+			float metallic = _Metallic;
+			if (_DisplacementMetallic == 1) {
+				metallic = remapFromTo(disp, _DisplacementAffectsMetallic.x, _DisplacementAffectsMetallic.z, _DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w);
+				metallic = smoothstep(_DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w, metallic);
+			}
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
 			o.Emission = _NoiseEmissionColor * disp + e.rgb + (_RimEmission * _RimColor * rimWeight);
-			o.Metallic = _Metallic;
-			o.Smoothness = _Glossiness;
+			o.Metallic = metallic;
+			o.Smoothness = smoothness;
 			o.Alpha = c.a;
 			
 		}

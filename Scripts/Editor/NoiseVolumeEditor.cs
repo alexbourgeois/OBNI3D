@@ -16,6 +16,7 @@ public class NoiseVolumeEditor : Editor
 
     SerializedProperty intensity;
     SerializedProperty valueRemappingType;
+    SerializedProperty valueRemappingFromTo;
     SerializedProperty blendOperator;
     SerializedProperty normalInfluence;
     SerializedProperty axisInfluence;
@@ -39,6 +40,7 @@ public class NoiseVolumeEditor : Editor
         volumeFallOff = serializedObject.FindProperty("falloffRadius");//ok
         clampDeformationToVolume = serializedObject.FindProperty("clampDeformationToVolume");//ok
         valueRemappingType = serializedObject.FindProperty("valueRemappingType");//ok
+        valueRemappingFromTo = serializedObject.FindProperty("valueRemappingFromTo");
         intensity = serializedObject.FindProperty("intensity");//ok
         valueRemappingType = serializedObject.FindProperty("valueRemappingType");
         blendOperator = serializedObject.FindProperty("blendOperator");//ok
@@ -72,8 +74,6 @@ public class NoiseVolumeEditor : Editor
             EditorGUILayout.PropertyField(blendOperator);
             EditorGUILayout.PropertyField(normalInfluence);
             EditorGUILayout.PropertyField(axisInfluence);
-            EditorGUILayout.PropertyField(valueRemappingType);
-            EditorGUILayout.PropertyField(clampDeformationToVolume);
             EditorGUILayout.PropertyField(deformerType);
             if (deformerType.hasMultipleDifferentValues || deformerType.intValue != 3)
             {
@@ -92,7 +92,9 @@ public class NoiseVolumeEditor : Editor
                 }
                 EditorGUI.indentLevel--;
             }
-            EditorGUILayout.PropertyField(syncWithCPU);
+            EditorGUILayout.PropertyField(valueRemappingType);
+            EditorGUILayout.PropertyField(valueRemappingFromTo);
+            EditorGUILayout.PropertyField(clampDeformationToVolume);
             EditorGUILayout.PropertyField(timeType);
 
             EditorGUI.indentLevel--;
