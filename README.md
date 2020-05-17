@@ -3,7 +3,7 @@
 ## Presentation
 
 This tool allows you to simply deform an object using Volumes. Those volumes are gameobjects with a NoiseVolume component.
-All vertices of an object using the ONBI3D shader that are inside a Volume will be affected deformed.
+All vertices of an object (using the ONBI3D shader) that are inside a Volume will be deformed according to Volume settings.
 A vertex normal recomputation is done in the shader to allow good reflections on deformed object.
 
 <p align="center">
