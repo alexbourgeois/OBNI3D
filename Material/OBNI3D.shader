@@ -164,12 +164,12 @@ Shader "OBNI/OBNI3D"
 			float smoothness = _Glossiness;
 			if (_DisplacementSmoothness == 1) {
 				smoothness = remapFromTo(disp, _DisplacementAffectsSmoothness.x, _DisplacementAffectsSmoothness.z, _DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w);
-				smoothness = smoothstep(_DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w, smoothness);
+				smoothness = clamp(smoothness, _DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w); //smoothstep(_DisplacementAffectsSmoothness.y, _DisplacementAffectsSmoothness.w, smoothness);
 			}
 			float metallic = _Metallic;
 			if (_DisplacementMetallic == 1) {
 				metallic = remapFromTo(disp, _DisplacementAffectsMetallic.x, _DisplacementAffectsMetallic.z, _DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w);
-				metallic = smoothstep(_DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w, metallic);
+				metallic = clamp(metallic,_DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w);// smoothstep(_DisplacementAffectsMetallic.y, _DisplacementAffectsMetallic.w, metallic);
 			}
 			o.Albedo = _RimColor * rimWeight + c.rgb * saturate(1 - rimWeight);
 			o.Emission = _NoiseEmissionColor * disp + e.rgb + (_RimEmission * _RimColor * rimWeight);

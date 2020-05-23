@@ -55,6 +55,9 @@ public class NoiseVolume : MonoBehaviour
     [Header("Time Settings")]
     public TimeType timeType = TimeType.Absolute;
     public bool SyncWithCPU = true;
+    public float timeUpdateFrequency = 60.0f;
+    private float _lastTimeUpdate;
+    private bool _timeUpdated;
 
     [Header("Deformer Settings")]
     public NoiseValueRemapType valueRemappingType = NoiseValueRemapType.PositiveAndNegative;
@@ -63,8 +66,8 @@ public class NoiseVolume : MonoBehaviour
     public NoiseSpace noiseSpace = NoiseSpace.World;
     public int seed;
     public float offset = 0;
-    public float scale = 5;
-    public Vector3 speed = Vector3.zero;
+    public float scale = 1;
+    public Vector3 speed = Vector3.up * 0.1f;
     public Space speedSpace;
     [Range(1, 6)]
     public int octave = 1;
@@ -81,6 +84,7 @@ public class NoiseVolume : MonoBehaviour
 
     private Vector3 _shaderSpeed;
     private Vector3 _speedOffset;
+    private Vector3 _lastSpeedOffset;
 
     private static List<NoiseVolume> noiseVolumes = new List<NoiseVolume>();
     private static List<Matrix4x4> noiseVolumeTransforms = new List<Matrix4x4>();
@@ -109,7 +113,7 @@ public class NoiseVolume : MonoBehaviour
             Shader.SetGlobalInt("noiseVolumeCount", 1);
 
             UpdateNoiseTransform();
-            UpdateNoiseSettings();
+            UpdateNoiseSettings(true);
 
             noiseVolumes.Add(this);
 
@@ -127,7 +131,7 @@ public class NoiseVolume : MonoBehaviour
         Shader.SetGlobalInt("noiseVolumeCount", _noiseIndexInShader + 1);
 
         UpdateNoiseTransform();
-        UpdateNoiseSettings();
+        UpdateNoiseSettings(true);
 
         noiseVolumes.Add(this);
     }
@@ -153,7 +157,7 @@ public class NoiseVolume : MonoBehaviour
         hasInitialized = false;
     }
 
-    public void UpdateNoiseSettings()
+    public void UpdateNoiseSettings(bool updateTime)
     {
         _shaderSpeed = speed;
 
@@ -183,7 +187,7 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 7] = octaveScale;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 8] = octaveAttenuation;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 9] = SyncWithCPU ? 1.0f : 0.0f;
-        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = Time.time;
+        noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = _lastTimeUpdate;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 11] = jitter;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 12] = intensity;
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 13] = clampDeformationToVolume ? 1.0f : 0.0f;
@@ -203,12 +207,17 @@ public class NoiseVolume : MonoBehaviour
         noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 27] = valueRemappingFromTo.w;
 
         _speedOffset += Time.deltaTime * _shaderSpeed;
+
+        if (updateTime)
+            _lastSpeedOffset = _speedOffset;
+
         if (timeType == TimeType.Relative)
         {
             //Relative time
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _speedOffset.x;
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 4] = _speedOffset.y;
-            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 5] = _speedOffset.z;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 3] = _lastSpeedOffset.x;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 4] = _lastSpeedOffset.y;
+            noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 5] = _lastSpeedOffset.z;
+            
             noiseVolumeSettings[_noiseIndexInShader * _nbParameter + 10] = 1.0f;
         }
 
@@ -229,8 +238,18 @@ public class NoiseVolume : MonoBehaviour
 
     private void Update()
     {
+        if(Time.time - _lastTimeUpdate > (1/timeUpdateFrequency))
+        {
+            _lastTimeUpdate = Time.time;
+            _timeUpdated = true;
+        }
+        else
+        {
+            _timeUpdated = false;
+        }
+
         UpdateNoiseTransform();
-        UpdateNoiseSettings();
+        UpdateNoiseSettings(_timeUpdated);
     }
 
     private void OnDrawGizmos()

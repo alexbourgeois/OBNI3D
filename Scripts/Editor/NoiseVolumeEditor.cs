@@ -8,6 +8,8 @@ public class NoiseVolumeEditor : Editor
 {
     SerializedProperty syncWithCPU;
     SerializedProperty timeType;
+    SerializedProperty timeUpdateFrequency;
+
     SerializedProperty volumeType;
     SerializedProperty volumeShape;
     SerializedProperty volumeFallOff;
@@ -35,6 +37,7 @@ public class NoiseVolumeEditor : Editor
     {
         syncWithCPU = serializedObject.FindProperty("SyncWithCPU"); //ok
         timeType = serializedObject.FindProperty("timeType");//ok
+        timeUpdateFrequency = serializedObject.FindProperty("timeUpdateFrequency");//ok
         volumeType = serializedObject.FindProperty("volumeType");//ok
         volumeShape = serializedObject.FindProperty("volumeShape");//ok
         volumeFallOff = serializedObject.FindProperty("falloffRadius");//ok
@@ -96,6 +99,7 @@ public class NoiseVolumeEditor : Editor
             EditorGUILayout.PropertyField(valueRemappingFromTo);
             EditorGUILayout.PropertyField(clampDeformationToVolume);
             EditorGUILayout.PropertyField(timeType);
+            EditorGUILayout.PropertyField(timeUpdateFrequency);
 
             EditorGUI.indentLevel--;
         }
