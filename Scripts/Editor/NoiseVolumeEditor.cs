@@ -21,6 +21,7 @@ public class NoiseVolumeEditor : Editor
     SerializedProperty valueRemappingFromTo;
     SerializedProperty blendOperator;
     SerializedProperty normalInfluence;
+    SerializedProperty noiseSpace;
     SerializedProperty axisInfluence;
     SerializedProperty deformerType;
     SerializedProperty seed;
@@ -52,6 +53,7 @@ public class NoiseVolumeEditor : Editor
         deformerType = serializedObject.FindProperty("deformerType");//ok
         scale = serializedObject.FindProperty("scale");//ok
         seed = serializedObject.FindProperty("seed");//ok
+        noiseSpace = serializedObject.FindProperty("noiseSpace");//ok
         offset = serializedObject.FindProperty("offset");//ok
         speed = serializedObject.FindProperty("speed");//ok
         speedSpace = serializedObject.FindProperty("speedSpace");//ok
@@ -76,6 +78,7 @@ public class NoiseVolumeEditor : Editor
             EditorGUILayout.PropertyField(intensity);
             EditorGUILayout.PropertyField(blendOperator);
             EditorGUILayout.PropertyField(normalInfluence);
+            EditorGUILayout.PropertyField(noiseSpace);
             EditorGUILayout.PropertyField(axisInfluence);
             EditorGUILayout.PropertyField(deformerType);
             if (deformerType.hasMultipleDifferentValues || deformerType.intValue != 3)
